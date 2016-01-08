@@ -23,6 +23,18 @@ var/
 .installed.cfg
 *.egg
 
+# Images
+*.jpg
+*.gif
+*.png
+*.svg
+*.ico
+!2015.12 Czech/images of thin film/Picture1.png
+!2015.12 Czech/images of thin film/Picture2.png
+
+# Pickles
+*.p
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
