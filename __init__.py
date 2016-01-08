@@ -23,11 +23,9 @@ def get(match_string, process=True):
         if match_string in f:
             matching_folders.append(f)
     if len(matching_folders) > 1:
-        print 'match_string {} matches multiple folders'.format(match_string)
-        return None
+        raise LookupError('\'' + match_string + '\' matches multile data folders')
     elif len(matching_folders) == 0:
-        print 'match_string {} does not match any folder'.format(match_string)
-        return None
+        raise LookupError('\'' + match_string + '\' does not match any data folders')
     else:
         folder = matching_folders[0]
     # get data dictionary
