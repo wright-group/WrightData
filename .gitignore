@@ -32,7 +32,8 @@ var/
 !2015.12 Czech/images of thin film/Picture1.png
 !2015.12 Czech/images of thin film/Picture2.png
 
-# Pickles
+# Python data storage types
+*.npz
 *.p
 
 # PyInstaller
