@@ -1,10 +1,10 @@
 ### import ####################################################################
 
 
+import os
 import itertools
-
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as grd
+import collections
+from distutils import util
 
 import scipy
 from scipy.optimize import leastsq
@@ -18,170 +18,269 @@ import WrightTools as wt
 ### define ####################################################################
 
 
-### amplitude and center (preamp) #############################################
+directory = os.path.dirname(__file__)
+
+raw_dictionary = collections.OrderedDict()
+processed_dictionary = collections.OrderedDict()
+
+# TODO: create way for actual data to be shared in this repository
+# assume that it will be downloaded from google drive
+# will be nice to ask user for 'y' or 'n' before automatically downloading
+# GOOGLE DRIVE API: https://developers.google.com/drive/v2/web/quickstart/python
+# PYDRIVE: http://pythonhosted.org/PyDrive/
+# also consider making the implementation work with 'git-lfs'
+# https://git-lfs.github.com/
 
 
-if False:
-    # THIS METHOD IS BROKEN - BJT 2016.01.17
-    # get data from file
-    motortune_path = r'MOTORTUNE [w1_Crystal_1, w1_Delay_1, wa] 2016.01.13 19_00_00.data'
-    curves = [r'OPA1 (10743) base - 2015.11.10 09_25_25.crv',
-              r'OPA1 (10743) mixer1 - 2015.11.09.crv',
-              r'OPA1 (10743) mixer2 - 2015.10.26 12_39_55.crv',
-              r'OPA1 (10743) mixer3 - 2013.06.01.crv']
+### TOPAS-C amplitude and center (preamp) #####################################
+
+
+# raw and processed are identical in this case
+out_path = 'TOPAS_C_full_preamp.p'
+
+force_workup = False
+
+def workup():
+    # ensure that user wants to spend the time doing the workup
+    if not force_workup:
+        prompt = 'TOPAS-C amplitude and center (preamp) workup may take some time, proceed?'
+        response = raw_input(prompt)
+        proceed = util.strtobool(response)
+        if not proceed:
+            return None, None
+    # get path
+    motortune_path = os.path.join(directory, 'TOPAS-C', 'MOTORTUNE [w1_Crystal_1, w1_Delay_1, wa] 2016.01.13 19_00_00.data')
+    # read information from headers
     headers = wt.kit.read_headers(motortune_path)
-    c1_index = headers['name'].index('w1_Crystal_1')
-    d1_index = headers['name'].index('w1_Delay_1')
     wa_index = headers['name'].index('wa')
     zi_index = headers['name'].index('array')
-    # this array is very very very large (~2.6 billion lines)
-    # it cannot be imported directly into memory
-    # instead I load chunks and fit them to Gaussians as I go
-    outs = np.full((10201, 4), np.nan)
-    i = len(headers)
-    j = 0
-    n = sum(1 for line in open(motortune_path, 'r'))
-    function = wt.fit.Gaussian()
-    while i <= n:
-        # get data from file
-        with open(motortune_path, 'r') as f:
-            lines = [line for line in itertools.islice(f, i, i+256)]
-            arr = np.array([np.fromstring(line, sep='\t') for line in lines]).T
-        # fit data, record
-        out = function.fit(arr[zi_index], arr[wa_index])
-        outs[j] = out
-        # finish
-        i += 256
-        j += 1
-        wt.kit.update_progress(100.*j/10201)
     c1 = np.array(headers['w1_Crystal_1 points'])
     d1 = np.array(headers['w1_Delay_1 points'])
-    outs.shape = (101, 101, 4)
-    np.savez('amp_and_cen.npz', c1=c1, d1=d1, outs=outs)
+    # this array is large (~2.6 billion lines)
+    # it cannot be imported directly into memory
+    # instead I load chunks and fit them to Gaussians as I go
+    acqns = c1.size * d1.size
+    outs = np.full((acqns, 4), np.nan)
+    file_slicer = wt.kit.FileSlicer(motortune_path)
+    function = wt.fit.Gaussian()
+    for i in range(acqns):
+        # get data from file
+        lines = file_slicer.get(256)
+        arr = np.array([np.fromstring(line, sep='\t') for line in lines]).T
+        # fit data, record
+        out = function.fit(arr[zi_index], arr[wa_index])
+        outs[i] = out
+        wt.kit.update_progress(100.*i/10201)
+    outs.shape = (c1.size, d1.size, 4)
+    cen = outs[..., 0]
+    wid = outs[..., 1]
+    amp = outs[..., 2]
+    bas = outs[..., 3]
+    # assemble data object
+    c1_axis = wt.data.Axis(c1, units=None, name='c1')
+    d1_axis = wt.data.Axis(d1, units=None, name='d1')
+    axes = [c1_axis, d1_axis]
+    cen_channel = wt.data.Channel(cen, units='nm', name='center')
+    wid_channel = wt.data.Channel(wid, units='wn', name='width')
+    amp_channel = wt.data.Channel(amp, units=None, name='amplitude')
+    bas_channel = wt.data.Channel(bas, units=None, name='baseline')
+    channels = [amp_channel, cen_channel, wid_channel, bas_channel]
+    data = wt.data.Data(axes, channels, name='TOPAS-C preamp')
+    data.save(os.path.join(directory, out_path))
+    # finish
+    return data, data.copy()
+      
+# get from pickle or create
+if os.path.isfile(os.path.join(directory, out_path)) and not force_workup:
+    raw_data = wt.data.from_pickle(os.path.join(directory, out_path), verbose=False)
+    processed_data = raw_data.copy()
+else:
+    raw_data, processed_data = workup()
+
+# check version
+if raw_data is None:
+    pass
+elif not raw_data.__version__.split('.')[0] == wt.__version__.split('.')[0]:
+    raw_data, processed_data = workup()
+
+# add to dictionaries
+raw_dictionary['TOPAS-C preamp'] = raw_data
+processed_dictionary['TOPAS-C preamp'] = processed_data
+
+
+### TOPAS-C amplitude and center (poweramp) ###################################
+
+
+# raw and processed are identical in this case
+out_path = 'TOPAS_C_full_poweramp.p'
+
+force_workup = False
+
+def workup():
+    # ensure that user wants to spend the time doing the workup
+    if not force_workup:
+        prompt = 'TOPAS-C amplitude and center (poweramp) workup may take some time, proceed?'
+        response = raw_input(prompt)
+        proceed = util.strtobool(response)
+        if not proceed:
+            return None, None
+    # get path
+    motortune_path = os.path.join(directory, 'TOPAS-C', 'MOTORTUNE [w1, w1_Crystal_2, w1_Delay_2, wa] 2016.01.15 09_50_46.data')
+    # for some reason, read headers fails for this file...
+    # define information that would normally be contained in headers manually
+    wa_index = 28
+    zi_index = 29
+    w1 = np.linspace(1140, 1620, 25)
+    c2 = np.linspace(-1, 1, 51)  # TODO: actual values
+    d2 = np.linspace(-1, 1, 51)  # TODO: actual values
+    # this array is large (~16 million lines)
+    # it cannot be imported directly into memory
+    # instead I load chunks and fit them to Gaussians as I go
+    acqns = w1.size * c2.size * d2.size
+    outs = np.full((acqns, 4), np.nan)
+    file_slicer = wt.kit.FileSlicer(motortune_path)
+    function = wt.fit.Gaussian()
+    for i in range(acqns):
+        # get data from file
+        lines = file_slicer.get(256)
+        arr = np.array([np.fromstring(line, sep='\t') for line in lines]).T
+        # fit data, record
+        out = function.fit(arr[zi_index], arr[wa_index])
+        outs[i] = out
+        wt.kit.update_progress(100.*i/acqns)
+    outs.shape = (w1.size, c2.size, d2.size, 4)
+    cen = outs[..., 0]
+    wid = outs[..., 1]
+    amp = outs[..., 2]
+    bas = outs[..., 3]
+    # assemble data object
+    w1_axis = wt.data.Axis(w1, units='nm', name='w1')
+    c1_axis = wt.data.Axis(c2, units=None, name='c2')
+    d1_axis = wt.data.Axis(d2, units=None, name='d2')
+    axes = [w1_axis, c1_axis, d1_axis]
+    cen_channel = wt.data.Channel(cen, units='nm', name='center')
+    wid_channel = wt.data.Channel(wid, units='wn', name='width')
+    amp_channel = wt.data.Channel(amp, units=None, name='amplitude')
+    bas_channel = wt.data.Channel(bas, units=None, name='baseline')
+    channels = [amp_channel, cen_channel, wid_channel, bas_channel]
+    data = wt.data.Data(axes, channels, name='TOPAS-C poweramp')
+    data.save(os.path.join(directory, out_path))
+    # finish
+    return data, data.copy()
+
+# get from pickle or create
+if os.path.isfile(os.path.join(directory, out_path)) and not force_workup:
+    raw_data = wt.data.from_pickle(os.path.join(directory, out_path), verbose=False)
+    processed_data = raw_data.copy()
+else:
+    raw_data, processed_data = workup()
+
+# check version
+if raw_data is None:
+    pass
+elif not raw_data.__version__.split('.')[0] == wt.__version__.split('.')[0]:
+    raw_data, processed_data = workup()
+
+# add to dictionaries
+raw_dictionary['TOPAS-C poweramp'] = raw_data
+processed_dictionary['TOPAS-C poweramp'] = processed_data
+
+
+### OPA800 signal and idler motortune #########################################
 
 
 if False:
-    # plot data
-    # import from npz
-    npz = np.load('amp_and_cen.npz')
-    c1 = npz['c1']
-    d1 = npz['d1']
-    outs = npz['outs']
-    outs = outs.T
-    cen = outs[0].flatten()
-    wid = outs[1].flatten()
-    amp = outs[2].flatten()
-    # grid out c1, d1
-    c1_grid, d1_grid = np.meshgrid(c1, d1, indexing='xy')
-    c1_list = c1_grid.flatten()
-    d1_list = d1_grid.flatten()
-    # remove points with amplitudes that are ridiculous
-    amp[amp<0.1] = np.nan
-    amp[amp>4] = np.nan
-    # remove points with centers that are ridiculous
-    cen[cen<1150] = np.nan
-    cen[cen>1650] = np.nan
-    # remove points with widths that are ridiculous
-    wid[wid<5] = np.nan
-    wid[wid>500] = np.nan
-    amp, cen, wid, c1_list, d1_list = wt.kit.remove_nans_1D([amp, cen, wid, c1_list, d1_list])
-    # grid data
-    xi = tuple(np.meshgrid(c1, d1, indexing='xy'))
-    c1_grid, d1_grid = xi
-    points = tuple([c1_list, d1_list])
-    amp = griddata(points, amp, xi, method='cubic')
-    amp /= np.nanmax(amp)
-    cen = griddata(points, cen, xi, method='cubic')
+    # TODO: make and save data pickle here
+    # TODO: seperate figure making from data import
+    data_path = r'MOTORTUNE [w2_Grating, w2_BBO] 2015.10.15 17_38_22.data'
+    # this data is sufficiently old that we have to process it manually :-(
+    # get values from file
+    headers = wt.kit.read_headers(data_path)
+    arr = np.genfromtxt(data_path).T
+    # extract arrays
+    grating_index = headers['name'].index('w2_Grating')
+    bbo_index = headers['name'].index('w2_BBO')
+    signal_index = headers['name'].index('pyro2_mean')
+    gra = arr[grating_index]
+    gra.shape = (-1, 401)
+    gra = gra[:, 0]
+    bbo = arr[bbo_index]
+    bbo.shape = (-1, 401)
+    bbo = bbo[0]
+    sig = arr[signal_index]
+    sig.shape = (-1, 401)
+    sig -= sig.min()
+    sig /= sig.max()
+    sig = sig.T
     # prepare plot
-    fig = plt.figure(figsize=[14, 6])
-    gs = grd.GridSpec(1, 5, hspace=0.05, wspace=0.05, width_ratios=[20, 1, 5, 20, 1])
-    # intensity
+    fig = plt.figure(figsize=[8, 6])
+    gs = grd.GridSpec(1, 2, hspace=0.05, wspace=0.05, width_ratios=[20, 1])
+    # pcolor
     cmap = wt.artists.colormaps['default']
-    cmap.set_under([0.75]*3, 1)
-    ax0 = plt.subplot(gs[0])
-    X, Y, Z = wt.artists.pcolor_helper(c1, d1, amp)
-    cax = ax0.pcolor(X, Y, Z, vmin=0, vmax=np.nanmax(Z), cmap=cmap)
-    ax0.set_xlim(c1.min(), c1.max())
-    ax0.set_ylim(1.35, 1.8)
-    ax0.set_xlabel('C1 (degrees)', fontsize=16)
-    ax0.set_ylabel('D1 (mm)', fontsize=16)
-    ax0.grid()
-    plt.colorbar(cax, plt.subplot(gs[1]))
-    wt.artists.corner_text('intensity (a.u.)', ax=ax0, fontsize=16)
-    ax0.contour(c1, d1, amp, 5, colors='k')
-    # color
-    cmap = wt.artists.colormaps['rainbow']
-    cmap.set_under([0.75]*3, 1)
-    ax1 = plt.subplot(gs[3])
-    X, Y, Z = wt.artists.pcolor_helper(c1, d1, cen)
-    cax = ax1.pcolor(X, Y, Z, vmin=np.nanmin(Z), vmax=np.nanmax(Z), cmap=cmap)
-    ax1.set_xlim(c1.min(), c1.max())
-    ax1.set_ylim(1.35, 1.8)
-    ax1.set_xlabel('C1 (degrees)', fontsize=16)
-    ax1.set_ylabel('D1 (mm)', fontsize=16)
-    ax1.grid()
-    plt.colorbar(cax, plt.subplot(gs[4]))
-    wt.artists.corner_text('color (nm)', ax=ax1, fontsize=16)
-    ax1.contour(c1, d1, cen, 25, colors='k')
+    ax = plt.subplot(gs[0])
+    X, Y, Z = wt.artists.pcolor_helper(gra, bbo, sig)    
+    cax = plt.pcolor(X, Y, Z, vmin=0, vmax=np.nanmax(Z), cmap=cmap)
+    ax.set_xlim(22, gra.max())
+    ax.set_ylim(bbo.min(), bbo.max())
+    # labels
+    ax.set_xlabel('Grating (mm)', fontsize=16)
+    ax.set_ylabel('BBO (mm)', fontsize=16)
+    ax.grid()
+    ax.axvline(34.6, c='k', alpha=0.5, lw=2)
+    ax.axhline(39.2, c='k', alpha=0.5, lw=2)
+    # on-plot labels
+    distance = 0.05
+    wt.artists.corner_text('II signal', ax=ax, corner='UL', fontsize=16, distance=distance)
+    wt.artists.corner_text('II idler', ax=ax, corner='UR', fontsize=16, distance=distance)
+    wt.artists.corner_text('III signal', ax=ax, corner='LL', fontsize=16, distance=distance)
+    wt.artists.corner_text('III idler', ax=ax, corner='LR', fontsize=16, distance=distance)
+    # colorbar
+    plt.colorbar(cax, cax=plt.subplot(gs[1]))
     # finish
-    plt.savefig('amplitude_and_center.png', transparent=True, dpi=300)
-    plt.close('all')
-
-
-### amplitude and center (poweramp) ###########################################
-
-
-if True:
-    motortune_path = r'MOTORTUNE [w1, w1_Crystal_2, w1_Delay_2, wa] 2016.01.15 09_50_46.data'
-    n = wt.kit.file_len(motortune_path)
-    # for some reason, read headers fails for this file...
-    #headers = wt.kit.read_headers(motortune_path)
-    with open(motortune_path) as f:
-        for i, l in enumerate(f):
-            if '# name' in l:
-                break
-
-    w1_index = 5
-    C2_index = 8
-    D2_index = 9
-    wa_index = 28
-    zi_index = 29
-
-    w1_len = 25
-    C2_len = 51
-    D2_len = 51 
-
-    w1 = np.full(65025, np.nan)
-    C2 = np.full(65025, np.nan)
-    D2 = np.full(65025, np.nan)
-    outs = np.full((65025, 4), np.nan)
-    function = wt.fit.Gaussian()
-    j = 0
-    i += 1
-    while i <= n:
-        # get data from file
-        with open(motortune_path, 'r') as f:
-            lines = [line for line in itertools.islice(f, i, i+256)]
-            arr = np.array([np.fromstring(line, sep='\t') for line in lines]).T
-        # fit data, record
-        out = function.fit(arr[zi_index], arr[wa_index])
-        outs[j] = out
-        # record others
-        w1[j] = arr[w1_index, 0]
-        C2[j] = arr[C2_index, 0]
-        D2[j] = arr[D2_index, 0]
-        # finish
-        i += 256
-        j += 1
-        wt.kit.update_progress(100.*j/65025)
-        
-    np.savez('poweramp.npz', w1=w1, c2=C2, d2=D2, outs=outs)
-
-
+    plt.savefig('signal_and_idler_motortune.png', dpi=300, transparent=True)
     
+    
+### OPA800 DFG Mixer Motortune ################################################
 
 
-
-
-
-
+if False:
+    # TODO: make and save data pickle here
+    # TODO: seperate figure making from data import
+    data_path = r'MOTORTUNE [w2, w2_Mixer] 2015.10.16 17_59_58.data'
+    # this data is sufficiently old that we have to process it manually :-(
+    # get values from file
+    headers = wt.kit.read_headers(data_path)
+    arr = np.genfromtxt(data_path).T
+    # extract arrays
+    w2_index = headers['name'].index('w2')
+    mixer_index = headers['name'].index('w2_Mixer')
+    signal_index = headers['name'].index('pyro2_mean')
+    w2 = arr[w2_index]
+    w2.shape = (-1, 501)
+    w2 = w2[:, 0]
+    mix = arr[mixer_index]
+    mix.shape = (-1, 501)
+    mix = mix[0]
+    sig = arr[signal_index]
+    sig.shape = (-1, 501)
+    sig -= sig.min()
+    sig /= sig.max()
+    sig = sig.T
+    # prepare plot
+    fig = plt.figure(figsize=[8, 6])
+    gs = grd.GridSpec(1, 2, hspace=0.05, wspace=0.05, width_ratios=[20, 1])
+    # pcolor
+    cmap = wt.artists.colormaps['default']
+    ax = plt.subplot(gs[0])
+    X, Y, Z = wt.artists.pcolor_helper(w2, mix, sig)    
+    cax = plt.pcolor(X, Y, Z, vmin=0, vmax=np.nanmax(Z), cmap=cmap)
+    ax.set_xlim(w2.min(), w2.max())
+    ax.set_ylim(mix.min(), mix.max())
+    ax.grid()
+    # axis labels
+    ax.set_xlabel('w2 (wn)', fontsize=16)
+    ax.set_ylabel('Grating (mm)', fontsize=16)
+    # colorbar
+    plt.colorbar(cax, cax=plt.subplot(gs[1]))
+    # finish
+    plt.savefig('DFG_mixer_motortune.png', dpi=300, transparent=True)

@@ -10,13 +10,25 @@ import imp
 import collections
 
 
-### get method ################################################################
+### define ####################################################################
+
+d = os.path.dirname(__file__)
+
+folders = [os.path.join(d,o) for o in os.listdir(d) if os.path.isdir(os.path.join(d,o)) and not '.git' in o]
+
+### keys ######################################################################
+
+
+def keys():
+    return [os.path.basename(p) for p in folders]
+
+
+### get #######################################################################
 
 
 def get(match_string, process=True):
     # get all subfolder paths
-    d = os.path.dirname(__file__)
-    folders = [os.path.join(d,o) for o in os.listdir(d) if os.path.isdir(os.path.join(d,o)) and not '.git' in o]
+    
     # choose particular folder
     matching_folders = []
     for f in folders:
