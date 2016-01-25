@@ -24,12 +24,16 @@ directory = os.path.dirname(__file__)
 
 props = dict(boxstyle='square', facecolor='white', alpha=0.8)
 
+template_fname = r'npzs\dpr {0} TO {1} w1 w2 d1 d2 arr.npz'
+dprs = [0.5, 1., 2.0]
+
 
 ### WMELs #####################################################################
 
+
 output_path = os.path.join(directory, 'WMELs.png')
 
-force_plotting = True
+force_plotting = False
 
 if not os.path.isfile(output_path) or force_plotting:
     # prepare for plot
@@ -216,8 +220,116 @@ if not os.path.isfile(output_path) or force_plotting:
     ax.text(text_buffer, 0.5, r'$\mathrm{\gamma}$', fontsize=25, verticalalignment='center', horizontalalignment='left')
     # labels
     dist = 0.05
-    fig.text(0.075, 1-dist, 'A', bbox=props, horizontalalignment='left', verticalalignment='top', fontsize=16)
-    fig.text(0.35, 1-dist, 'B', bbox=props, horizontalalignment='left', verticalalignment='top', fontsize=16)    
-    # save
+    fig.text(0.075, 1-dist, 'a', bbox=props, horizontalalignment='left', verticalalignment='top', fontsize=16)
+    fig.text(0.35, 1-dist, 'b', bbox=props, horizontalalignment='left', verticalalignment='top', fontsize=16)    
+    # finish
     plt.savefig(output_path, dpi=300, transparent=True)
+    plt.close(fig)
+
+
+### simulation overview #######################################################
+
+
+output_path = os.path.join(directory, 'simulation_overview.png')
+
+force_plotting = False
+
+if not os.path.isfile(output_path) or force_plotting:
+    # prepare for plot
+    fig = plt.figure(figsize=[10, 8])
+    gs = grd.GridSpec(2, 4, width_ratios=[20, 20, 20, 1])
+    # set of coherence times vs lab time --------------------------------------
+    # calculating transients directly right here is easiest
+    def normalized_gauss(t, FWHM):
+        sigma = FWHM / (2.*np.sqrt(np.log(2.)))    
+        out = np.exp(-0.5*(t/sigma)**2)
+        out /= sigma * np.sqrt(2*np.pi)
+        return out        
+    def rho(t,tau,mu,E, last_rho):
+        f = np.zeros(t.shape, dtype=np.complex64)
+        for i in range(t.size-1):
+            dt = t[i+1]-t[i]
+            df1 = 0.5 * E[i] * last_rho[i] - 1/tau * f[i]
+            ftemp = f[i] + df1 * dt
+            df2 = 0.5 * E[i+1] * last_rho[i+1] - 1/tau * ftemp
+            f[i+1] = f[i] + 0.5 * dt * ( df1 + df2 )
+        return f
+    # TODO: use actually relevant parameters
+    tau = 200.
+    mu = 1.
+    FWHM = np.linspace(-1.6, 1.6, num=10)
+    FWHM = 10**FWHM * tau
+    start_fine_int = -250
+    end_fine_int = 500
+    t1 = np.linspace(-10000, start_fine_int, num=10000)
+    t2 = np.linspace(start_fine_int+1, end_fine_int-1, num=20000)
+    t3 = np.linspace(end_fine_int,20000, num=10000)
+    t = np.hstack([t1,t2,t3])
+    rho1 = [rho(t,tau,mu,normalized_gauss(t,FWHMi), np.ones(len(t))) for FWHMi in FWHM]
+    ax = plt.subplot(gs[0, 0])    
+    # plot pulse
+    xi = t
+    function = wt.fit.Gaussian()
+    yi = function.evaluate([0, 50, 1, 0], xi)
+    plt.plot(xi, yi)
+    # plot rhos
+    for i, rhoi in enumerate(rho1):
+        ax.plot(t,np.abs(rhoi)*2, 'k', linewidth=2, alpha=0.8)
+    ax.set_xlim(-500, 500)
+    ax.grid()
+    wt.artists.corner_text('a', ax=ax, fontsize=16)
+    # evolution of density matrix terms in pw5 --------------------------------
+    ax = plt.subplot(gs[0, 1])
     
+    wt.artists.corner_text('b', ax=ax, fontsize=16)
+    # FT of FID above and mono pass function ----------------------------------
+    ax = plt.subplot(gs[0, 2])
+    # TODO: make this correspond to actual calculations
+    function = wt.fit.Gaussian()
+    xi = np.linspace(-100, 100)
+    yi = function.evaluate([0, 40, 1, 0], xi)
+    ax.plot(xi, yi, c='k', lw=2)
+    ax.axvline(-10, c='k', ls='--')
+    ax.axvline(10, c='k', ls='--')
+    ax.set_ylim(0, 1.1)
+    ax.grid()
+    wt.artists.corner_text('c', ax=ax, fontsize=16)
+    # measured 2D frequency with homo lineshape -------------------------------
+    ax = plt.subplot(gs[1, 0])
+    fname = template_fname.format(dprs[1], 'all')
+    npz = np.load(fname)
+    # TODO: transform axes into 'relative' units
+    xi = npz['w1']
+    yi = npz['w2']
+    zi = npz['arr'][:, :, 0, 10]
+    zi /= zi.max()
+    cmap = wt.artists.colormaps['default']
+    levels = np.linspace(0, 1, 200)
+    mappable = ax.contourf(xi, yi, zi, levels=levels, cmap=cmap)
+    ax.grid()
+    ax.plot([xi.min(), xi.max()],[xi.min(), xi.max()],'k:')
+    ax.set_xlim(xi.min(), xi.max())
+    ax.set_ylim(xi.min(), xi.max())
+    wt.artists.corner_text('d', ax=ax, fontsize=16)
+    # representation of kernal ------------------------------------------------
+    ax = plt.subplot(gs[1, 1])
+    # I might consider doing this as a 3D plot
+    # because the kernal is just a line if you look down on it from
+    # 'directly above'
+    wt.artists.corner_text('e', ax=ax, fontsize=16)
+    # inhomogenious -----------------------------------------------------------
+    ax = plt.subplot(gs[1, 2])
+
+    wt.artists.corner_text('f', ax=ax, fontsize=16)
+    # colorbar ----------------------------------------------------------------
+    plt.colorbar(mappable=mappable, cax=plt.subplot(gs[:, 3]))
+
+    # finish
+    plt.savefig(output_path, dpi=300, transparent=True)
+    plt.close('fig')
+
+
+### hamiltonian ###############################################################
+
+
+# TODO:

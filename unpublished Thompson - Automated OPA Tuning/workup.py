@@ -72,10 +72,10 @@ def workup():
         outs[i] = out
         wt.kit.update_progress(100.*i/10201)
     outs.shape = (c1.size, d1.size, 4)
-    cen = outs[..., 0]
-    wid = outs[..., 1]
-    amp = outs[..., 2]
-    bas = outs[..., 3]
+    cen = outs[..., 0].T
+    wid = outs[..., 1].T
+    amp = outs[..., 2].T
+    bas = outs[..., 3].T
     # assemble data object
     c1_axis = wt.data.Axis(c1, units=None, name='c1')
     d1_axis = wt.data.Axis(d1, units=None, name='d1')
