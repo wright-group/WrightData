@@ -125,14 +125,14 @@ def workup():
         if not proceed:
             return None, None
     # get path
-    motortune_path = os.path.join(directory, 'TOPAS-C', 'MOTORTUNE [w1, w1_Crystal_2, w1_Delay_2, wa] 2016.01.15 09_50_46.data')
+    motortune_path = os.path.join(directory, 'TOPAS-C', 'MOTORTUNE [w1, w1_Crystal_2, w1_Delay_2, wa] 2016.01.25 16_56_06.data')
     # for some reason, read headers fails for this file...
     # define information that would normally be contained in headers manually
     wa_index = 28
     zi_index = 29
     w1 = np.linspace(1140, 1620, 25)
-    c2 = np.linspace(-1, 1, 51)  # TODO: actual values
-    d2 = np.linspace(-1, 1, 51)  # TODO: actual values
+    c2 = np.linspace(-2.5, 2.5, 51)  # TODO: actual values
+    d2 = np.linspace(-1.5, 1.5, 51)  # TODO: actual values
     # this array is large (~16 million lines)
     # it cannot be imported directly into memory
     # instead I load chunks and fit them to Gaussians as I go

@@ -14,6 +14,16 @@ from scipy.interpolate import griddata, interp1d, interp2d, UnivariateSpline
 
 import numpy as np
 
+import NISE
+from NISE.lib import pulse
+from NISE.lib.misc.__init__ import NISE_path
+import numpy as np
+# important:  we can't call on scan directly for some reason; use trive to do it
+import NISE.lib.measure as m
+import NISE.experiments.trive as trive
+import NISE.hamiltonians.H0 as H0
+import NISE.hamiltonians.params.inhom as inhom
+
 import WrightTools as wt
 
 
@@ -26,6 +36,15 @@ props = dict(boxstyle='square', facecolor='white', alpha=0.8)
 
 template_fname = r'npzs\dpr {0} TO {1} w1 w2 d1 d2 arr.npz'
 dprs = [0.5, 1., 2.0]
+    
+def normalize_frequency(arr):
+    arr -= arr.mean()
+    arr /= 2 * np.log(2) / (50*np.pi * 3e10) * 1e15
+    return arr
+    
+def normalize_delay(arr):
+    arr /= 50.
+    return arr
 
 
 ### WMELs #####################################################################
@@ -81,7 +100,8 @@ if not os.path.isfile(output_path) or force_plotting:
     add_arrow([1, 0], 0.75, 2)
     #ax.text(1.1, 0.15, '5', fontsize=12, horizontalalignment='center', verticalalignment='center')
     state_text_buffer = 0.25
-    state_names = ['N=0', '1', '2', '3']
+    # TODO: add dot dot dot, line for n=N
+    state_names = ['n=0', '1', '2', '3']
     for i in range(len(energies)):
         ax.text(-state_text_buffer, energies[i], state_names[i], fontsize=12, verticalalignment='center', horizontalalignment ='right')
     ax.set_xlim(-0.1, 1.1)
@@ -232,12 +252,12 @@ if not os.path.isfile(output_path) or force_plotting:
 
 output_path = os.path.join(directory, 'simulation_overview.png')
 
-force_plotting = False
+force_plotting = True
 
 if not os.path.isfile(output_path) or force_plotting:
     # prepare for plot
-    fig = plt.figure(figsize=[10, 8])
-    gs = grd.GridSpec(2, 4, width_ratios=[20, 20, 20, 1])
+    fig = plt.figure(figsize=[15, 8])
+    gs = grd.GridSpec(2, 4, width_ratios=[20, 30, 20, 1])
     # set of coherence times vs lab time --------------------------------------
     # calculating transients directly right here is easiest
     def normalized_gauss(t, FWHM):
@@ -280,7 +300,53 @@ if not os.path.isfile(output_path) or force_plotting:
     wt.artists.corner_text('a', ax=ax, fontsize=16)
     # evolution of density matrix terms in pw5 --------------------------------
     ax = plt.subplot(gs[0, 1])
-    
+    trive.exp.set_coord(trive.d2, 200.)
+    trive.exp.set_coord(trive.ws, 7000.)
+    trive.exp.set_coord(trive.ss, 50.)
+    trive.exp.early_buffer = 500
+    trive.exp.late_buffer = 500
+    # hamiltonian
+    H0.tau_ag = 50.
+    H0.tau_2aa = 50.
+    H0.tau_2ag = 50.
+    H = H0.Omega()
+    H.out_group = [[i] for i in range(7)]
+    H.TOs = [5]  # other pathways complicate interpretation...
+    # scan
+    d1 = trive.d1  # I seem to need an axis argument...
+    d1.points = np.array([100])  # this is where you set D1, really
+    scan = trive.exp.scan(trive.d1, H=H)
+    scan.run(mp=False, autosave=False)
+    # plot pulses
+    arr = scan.efields(windowed=True)
+    # -2
+    yi = np.abs(arr[0, 1, :])**2
+    yi /= yi.max()
+    plt.plot(yi, c='k')
+    # 2'
+    yi = np.abs(arr[0, 2, :])**2
+    yi /= yi.max()
+    plt.plot(yi, c='k')
+    # 1
+    yi = np.abs(arr[0, 0, :])**2
+    yi /= yi.max()
+    plt.plot(yi, c='k')
+    # plot density matrix terms
+    # ga
+    yi = np.abs(scan.sig[0, 2, :])**2
+    yi /= yi.max()
+    plt.plot(yi)
+    # aa
+    yi = np.abs(scan.sig[0, 3, :])**2
+    yi /= yi.max()
+    plt.plot(yi)
+    # ag2
+    yi = np.abs(scan.sig[0, 5, :])**2
+    yi /= yi.max()
+    plt.plot(yi)
+    # finish    
+    plt.ylim(0, 1.1)
+    plt.grid()    
     wt.artists.corner_text('b', ax=ax, fontsize=16)
     # FT of FID above and mono pass function ----------------------------------
     ax = plt.subplot(gs[0, 2])
@@ -296,31 +362,64 @@ if not os.path.isfile(output_path) or force_plotting:
     wt.artists.corner_text('c', ax=ax, fontsize=16)
     # measured 2D frequency with homo lineshape -------------------------------
     ax = plt.subplot(gs[1, 0])
-    fname = template_fname.format(dprs[1], 'all')
-    npz = np.load(fname)
-    # TODO: transform axes into 'relative' units
-    xi = npz['w1']
-    yi = npz['w2']
-    zi = npz['arr'][:, :, 0, 10]
-    zi /= zi.max()
+    data = wt.data.from_pickle(os.path.join(directory, 'simulation_overview.p'))
+    xi = normalize_frequency(data.w0.points)
+    yi = normalize_frequency(data.w1.points)
+    zi = data.simulation.values
     cmap = wt.artists.colormaps['default']
-    levels = np.linspace(0, 1, 200)
-    mappable = ax.contourf(xi, yi, zi, levels=levels, cmap=cmap)
+    levels= np.linspace(0, 1, 200)
+    mappable = ax.contourf(xi, yi, zi, cmap=cmap, levels=levels)
+    ax.contour(xi, yi, zi, 5, colors='k')
     ax.grid()
-    ax.plot([xi.min(), xi.max()],[xi.min(), xi.max()],'k:')
-    ax.set_xlim(xi.min(), xi.max())
-    ax.set_ylim(xi.min(), xi.max())
+    ax.set_xlim(-2, 2)
+    ax.set_ylim(-2, 2)
+    wt.artists.diagonal_line(xi, yi)
     wt.artists.corner_text('d', ax=ax, fontsize=16)
-    # representation of kernal ------------------------------------------------
-    ax = plt.subplot(gs[1, 1])
-    # I might consider doing this as a 3D plot
-    # because the kernal is just a line if you look down on it from
-    # 'directly above'
+    # representation of kernal ------------------------------------------------    
+    from mpl_toolkits.mplot3d import Axes3D
+    from matplotlib.collections import PolyCollection
+    from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+    from matplotlib.colors import colorConverter        
+    ax = plt.subplot(gs[1, 1], projection='3d')
+    plt.setp(ax.get_xticklabels(), visible=False)
+    plt.setp(ax.get_yticklabels(), visible=False)
+    plt.setp(ax.get_zticklabels(), visible=False)
+    def cc(arg):
+        return colorConverter.to_rgba(arg, alpha=0.6)
+    xi = np.linspace(-2, 2, 1000)
+    yi = xi
+    function = wt.fit.Gaussian()
+    zi = function.evaluate([0, 1/3., 1, 0], xi)
+    verts = [zip(xi, yi, zi)]
+    poly = Poly3DCollection(verts, facecolors=[cc('grey')])
+    ax.add_collection3d(poly)
+    ax.set_xlabel(r'$\mathsf{\bar{\nu_1}}$', fontsize=16)
+    ax.set_xlim3d(-2, 2)
+    ax.set_ylabel(r'$\mathsf{\bar{\nu_2}}$', fontsize=16)
+    ax.set_ylim3d(-2, 2)
+    ax.set_zlim3d(0, 1)
     wt.artists.corner_text('e', ax=ax, fontsize=16)
     # inhomogenious -----------------------------------------------------------
     ax = plt.subplot(gs[1, 2])
-
+    data = wt.data.from_pickle(os.path.join(directory, 'simulation_overview_smeared.p'))
+    xi = normalize_frequency(data.w0.points)
+    yi = normalize_frequency(data.w1.points)
+    zi = data.simulation.values
+    cmap = wt.artists.colormaps['default']
+    levels= np.linspace(0, 1, 200)
+    mappable = ax.contourf(xi, yi, zi, cmap=cmap, levels=levels)
+    ax.contour(xi, yi, zi, 5, colors='k')
+    ax.grid()
+    ax.set_xlim(-2, 2)
+    ax.set_ylim(-2, 2)
+    wt.artists.diagonal_line(xi, yi)
     wt.artists.corner_text('f', ax=ax, fontsize=16)
+    # show inhomo linewidth applied
+    center = 7000.
+    width = 500.
+    l = np.linspace(center-(width/2), center+(width/2), 100)
+    l = normalize_frequency(l)
+    ax.plot(l, l, c='k', lw=5)
     # colorbar ----------------------------------------------------------------
     plt.colorbar(mappable=mappable, cax=plt.subplot(gs[:, 3]))
 
@@ -333,3 +432,4 @@ if not os.path.isfile(output_path) or force_plotting:
 
 
 # TODO:
+
