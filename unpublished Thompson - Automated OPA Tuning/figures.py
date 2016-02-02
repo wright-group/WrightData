@@ -92,33 +92,20 @@ if not os.path.isfile(output_path) or force_workup:
 ### TOPAS-C poweramp ##########################################################
 
 
-output_path = os.path.join(directory, 'TOPAS_C_poweramp_intensity.png')
+output_path = os.path.join(directory, 'TOPAS_C_poweramp_gaussian_amplitude.png')
 
 force_workup = True
 
 if not os.path.isfile(output_path) or force_workup:
-    # load data from pickle
-    data = wt.data.from_pickle('TOPAS_C_full_poweramp.p')
-    # clip based on intensity
-    data.amplitude.clip(zmin=0.1, zmax=5)
-    # clip based on width
-    data.width.clip(zmin=10, zmax=100)
-    # clip based on center
-    data.center.clip(zmin=1140, zmax=1620)
-    # share NaNs
-    data.share_nans()
-    # plot --------------------------------------------------------------------
-    channel_indicies = [0, 1]
-    output_paths = [output_path, output_path.replace('intensity', 'color')] 
-    cbar_names = ['default', 'rainbow']
-    for channel_index, output_path, cbar_name in zip(channel_indicies, output_paths, cbar_names):
+    # plot function -----------------------------------------------------------
+    def plot(data, channel_index, output_path, cbar_name, title): 
         # prepare plot
         fig = plt.figure(figsize=[14, 14])
-        gs = grd.GridSpec(5, 6, hspace=0, wspace=0, width_ratios=[20, 20, 20, 20, 20, 1])
+        gs = grd.GridSpec(5, 7, hspace=0, wspace=0, width_ratios=[20, 20, 20, 20, 20, 1, 1])
         idxs = [idx for idx in np.ndindex(5, 5)]
+        zlim = [data.channels[channel_index].zmin, data.channels[channel_index].zmax]
         for i, idx in zip(range(data.w1.points.size), idxs):
             # get data
-            channel_name = data.channel_names[channel_index]
             w1 = data.w1.points[i]
             chop = data.chop('d2', 'c2', {'w1': [w1, 'nm']}, verbose=False)[0]
             xi = chop.c2.points
@@ -129,7 +116,7 @@ if not os.path.isfile(output_path) or force_workup:
             cmap.set_under([0.75]*3, 1)
             ax = plt.subplot(gs[idx])
             X, Y, Z = wt.artists.pcolor_helper(xi, yi, zi)
-            pcolor = ax.pcolor(X, Y, Z, vmin=np.nanmin(Z), vmax=np.nanmax(Z), cmap=cmap)
+            pcolor = ax.pcolor(X, Y, Z, vmin=np.nanmin(zlim[0]), vmax=np.nanmax(zlim[1]), cmap=cmap)
             ax.set_xlim(xi.min(), xi.max())
             ax.set_ylim(yi.min(), yi.max())
             ax.set_yticks(np.linspace(-1.0, 1.0, 5))
@@ -152,11 +139,43 @@ if not os.path.isfile(output_path) or force_workup:
         # text ---------------------------------------=------------------------
         fig.text(0.5, 0.075, '$\mathsf{\Delta}$C2 (degrees)', fontsize=16, ha='center', va='top')
         fig.text(0.075, 0.5, '$\mathsf{\Delta}$D2 (degrees)', rotation=90, fontsize=16, ha='right', va='center')
+        fig.suptitle(title, fontsize=20)        
         # finish --------------------------------------------------------------
         plt.savefig(output_path, transparent=True, dpi=300)
         plt.close(fig)
+        print 'figure saved at', output_path
+    # gaussian ----------------------------------------------------------------
+    # load data from pickle
+    gaussian = wt.data.from_pickle('TOPAS_C_full_poweramp_guassian.p')
+    # clip, share NaNs
+    gaussian.amplitude.clip(zmin=0.1, zmax=5)
+    gaussian.width.clip(zmin=10, zmax=100)
+    gaussian.center.clip(zmin=1140, zmax=1620)
+    gaussian.share_nans()
+    # plot
+    p = output_path
+    plot(gaussian, 0, p, 'default', 'Gaussian amplitude')
+    p = output_path.replace('amplitude', 'center')
+    plot(gaussian, 1, p, 'rainbow', 'Gaussian center')
+    # moments -----------------------------------------------------------------
+    moments = wt.data.from_pickle('TOPAS_C_full_poweramp_moments.p')
+    # clip, share NaNs
+    moments.integral.clip(zmin=0.1, zmax=500)
+    moments.one.clip(zmin=1140, zmax=1620)
+    #moments.share_nans()
+    # plot
+    p = output_path.replace('gaussian_amplitude', 'integral')
+    plot(moments, 0, p, 'default', 'integral')
+    p = output_path.replace('gaussian_amplitude', 'first_moment')
+    plot(moments, 1, p, 'rainbow', 'first moment')
+    p = output_path.replace('gaussian_amplitude', 'second_moment')
+    plot(moments, 2, p, 'default', 'second moment')
+    p = output_path.replace('gaussian_amplitude', 'third_moment')
+    plot(moments, 3, p, 'default', 'third moment')
+    p = output_path.replace('gaussian_amplitude', 'fourth_moment')
+    plot(moments, 4, p, 'default', 'fourth moment')
 
-
+ 
 ### OPA800 signal and idler motortune #########################################
 
 

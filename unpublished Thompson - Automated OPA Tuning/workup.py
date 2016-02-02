@@ -56,6 +56,7 @@ def workup():
     zi_index = headers['name'].index('array')
     c1 = np.array(headers['w1_Crystal_1 points'])
     d1 = np.array(headers['w1_Delay_1 points'])
+    # TODO: check if my line count is correct (am I thinking floats?)
     # this array is large (~2.6 billion lines)
     # it cannot be imported directly into memory
     # instead I load chunks and fit them to Gaussians as I go
@@ -112,7 +113,7 @@ processed_dictionary['TOPAS-C preamp'] = processed_data
 
 
 # raw and processed are identical in this case
-out_path = 'TOPAS_C_full_poweramp.p'
+out_path = 'TOPAS_C_full_poweramp_guassian.p'
 
 force_workup = False
 
@@ -184,6 +185,83 @@ elif not raw_data.__version__.split('.')[0] == wt.__version__.split('.')[0]:
 # add to dictionaries
 raw_dictionary['TOPAS-C poweramp'] = raw_data
 processed_dictionary['TOPAS-C poweramp'] = processed_data
+
+
+### TOPAS-C amplitude and center (poweramp, moments) ##########################
+
+
+# raw and processed are identical in this case
+out_path = 'TOPAS_C_full_poweramp_moments.p'
+
+force_workup = False
+
+def workup():
+    # ensure that user wants to spend the time doing the workup
+    if not force_workup:
+        prompt = 'TOPAS-C amplitude and center (poweramp) workup may take some time, proceed?'
+        response = raw_input(prompt)
+        proceed = util.strtobool(response)
+        if not proceed:
+            return None, None
+    # get path
+    motortune_path = os.path.join(directory, 'TOPAS-C', 'MOTORTUNE [w1, w1_Crystal_2, w1_Delay_2, wa] 2016.01.25 16_56_06.data')
+    # for some reason, read headers fails for this file...
+    # define information that would normally be contained in headers manually
+    wa_index = 28
+    zi_index = 29
+    w1 = np.linspace(1140, 1620, 25)
+    c2 = np.linspace(-2.5, 2.5, 51)
+    d2 = np.linspace(-1.5, 1.5, 51)
+    # this array is large (~16 million lines)
+    # it cannot be imported directly into memory
+    # instead I load chunks and fit them to Gaussians as I go
+    acqns = w1.size * c2.size * d2.size
+    outs = np.full((acqns, 6), np.nan)
+    file_slicer = wt.kit.FileSlicer(motortune_path)
+    function = wt.fit.Moments()
+    for i in range(acqns):
+        # get data from file
+        lines = file_slicer.get(256)
+        arr = np.array([np.fromstring(line, sep='\t') for line in lines]).T
+        # fit data, record
+        out = function.fit(arr[zi_index], arr[wa_index])
+        outs[i] = out
+        wt.kit.update_progress(100.*i/acqns)
+    file_slicer.close()
+    outs.shape = (w1.size, c2.size, d2.size, 6)
+    # assemble data object
+    w1_axis = wt.data.Axis(w1, units='nm', name='w1')
+    c1_axis = wt.data.Axis(c2, units=None, name='c2')
+    d1_axis = wt.data.Axis(d2, units=None, name='d2')
+    axes = [w1_axis, c1_axis, d1_axis]
+    ch_0 = wt.data.Channel(outs[..., 0], units='nm', name='integral')
+    ch_1 = wt.data.Channel(outs[..., 1], units='wn', name='one')
+    ch_2 = wt.data.Channel(outs[..., 2], units=None, name='two')
+    ch_3 = wt.data.Channel(outs[..., 3], units=None, name='three')
+    ch_4 = wt.data.Channel(outs[..., 4], units=None, name='four')
+    ch_5 = wt.data.Channel(outs[..., 5], units=None, name='baseline')
+    channels = [ch_0, ch_1, ch_2, ch_3, ch_4, ch_5]
+    data = wt.data.Data(axes, channels, name='TOPAS-C poweramp')
+    data.save(os.path.join(directory, out_path))
+    # finish
+    return data, data.copy()
+
+# get from pickle or create
+if os.path.isfile(os.path.join(directory, out_path)) and not force_workup:
+    raw_data = wt.data.from_pickle(os.path.join(directory, out_path), verbose=False)
+    processed_data = raw_data.copy()
+else:
+    raw_data, processed_data = workup()
+
+# check version
+if raw_data is None:
+    pass
+elif not raw_data.__version__.split('.')[0] == wt.__version__.split('.')[0]:
+    raw_data, processed_data = workup()
+
+# add to dictionaries
+raw_dictionary['TOPAS-C poweramp moments'] = raw_data
+processed_dictionary['TOPAS-C poweramp moments'] = processed_data
 
 
 ### OPA800 signal and idler motortune #########################################
