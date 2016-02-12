@@ -12,7 +12,8 @@ This material is excerpted from a work that was published in The Journal of Phys
 3. [Absorbance C](#absorbance-c) - absorbance spectrum of sample C
 4. [2D Frequencies](#2d-frequencies) - 2D frequency vs delay progression of sample A
 5. [2D Delays](#2d-delays) - 2D delays at two w1 frequencies for sample B
-6. [Diagonal Wiger](#diagonal-wigner) - diagonal wigner for sample C
+6. [Diagonal Wigner](#diagonal-wigner) - diagonal wigner for sample C
+7. [W2 Wigners](#w2-wigners) - w2 wigners at 3 w1 frequencies for sample C
 
 
 ## Absorbance A
