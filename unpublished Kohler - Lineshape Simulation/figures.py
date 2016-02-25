@@ -93,7 +93,7 @@ delay_ticks = [-2, 0, 2]
 
 output_path = os.path.join(directory, 'WMELs.png')
 
-force_plotting = False
+force_plotting = True
 
 if not os.path.isfile(output_path) or force_plotting:
     # prepare for plot
@@ -143,6 +143,11 @@ if not os.path.isfile(output_path) or force_plotting:
     ax.set_xlim(-0.1, 1.1)
     ax.set_ylim(-0.025, 1.025)
     ax.axis('off')
+    # highlights
+    import matplotlib.patches as patches
+    patch1 = patches.Rectangle((0.3525, 0.1775), 0.245, 0.175, transform=fig.transFigure, figure=fig, facecolor='y', alpha=0.25)
+    patch2 = patches.Rectangle((0.689, 0.6476), 0.16, 0.175, transform=fig.transFigure, figure=fig, facecolor='y', alpha=0.25)
+    fig.patches.extend([patch1, patch2])
     # pathway 1 ---------------------------------------------------------------
     energies = [0., 0.5, 1.]
     state_text_buffer = 0.25
@@ -546,7 +551,7 @@ if not os.path.isfile(output_path) or force_plotting:
 
 output_path = os.path.join(directory, 'fid_v_driven.png')
 
-force_plotting = True
+force_plotting = False
 
 if not os.path.isfile(output_path) or force_plotting:
     # prepare figure
