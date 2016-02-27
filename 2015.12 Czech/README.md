@@ -2,7 +2,7 @@
 
 Authors: Kyle J. Czech, Blaise J. Thompson, Schuyler Kain, Qi Ding, Melinda J. Shearer, Robert J. Hamers, Song Jin, and John C. Wright
 
-This material is excerpted from a work that was published in ACS Nano, copyright © American Chemical Society after peer review. To access the final edited and published work see http://pubs.acs.org/doi/abs/10.1021/acsnano.5b05198.
+This material is excerpted from a work that was published in ACS Nano, copyright © American Chemical Society after peer review. To access the final edited and published work see http://pubs.acs.org/doi/abs/10.1021/acsnano.5b05198 .
 
 ## Contents
 
