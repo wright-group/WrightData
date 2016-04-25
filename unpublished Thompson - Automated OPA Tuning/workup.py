@@ -32,6 +32,18 @@ processed_dictionary = collections.OrderedDict()
 # https://git-lfs.github.com/
 
 
+### download ##################################################################
+
+
+try:
+    drive = wt.google_drive.Drive()
+    ids = drive._list_folder('0BzJTClorMBuwZzB1TnlGMEhweEU')
+    for fileid in ids:
+        drive.download(fileid, directory=directory)
+except:
+    pass
+
+
 ### TOPAS-C amplitude and center (preamp) #####################################
 
 
