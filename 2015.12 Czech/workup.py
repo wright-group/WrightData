@@ -21,11 +21,11 @@ processed_dictionary = collections.OrderedDict()
 
 try:
     drive = wt.google_drive.Drive()
-    ids = drive.list_folder('0BzJTClorMBuwZzB1TnlGMEhweEU')
+    ids = drive.list_folder('0BzJTClorMBuwRW94Z1N0anEwblU')
     for fileid in ids:
         drive.download(fileid, directory=directory)
-except:
-    pass
+except Exception as inst:
+    print inst
 
 
 ### movie #####################################################################
