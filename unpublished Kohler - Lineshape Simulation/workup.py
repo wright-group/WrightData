@@ -34,6 +34,18 @@ raw_dictionary = collections.OrderedDict()
 processed_dictionary = collections.OrderedDict()
 
 
+### download ##################################################################
+
+
+try:
+    drive = wt.google_drive.Drive()
+    ids = drive.list_folder('0BzJTClorMBuwWkpRbDlLZHdmSXc')
+    for fileid in ids:
+        drive.download(fileid, directory=directory)
+except Exception as inst:
+    print inst
+
+
 ### simulation overview 2D frequency (without smear) ##########################
 
 
