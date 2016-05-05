@@ -9,6 +9,10 @@ import os
 import imp
 import collections
 
+import ConfigParser
+
+import shared
+
 
 ### define ####################################################################
 
@@ -16,6 +20,9 @@ import collections
 d = os.path.dirname(__file__)
 
 folders = [os.path.join(d,o) for o in os.listdir(d) if os.path.isdir(os.path.join(d,o)) and not '.git' in o]
+
+google_drive_ini = ConfigParser.SafeConfigParser()
+google_drive_ini.read(os.path.join(d, 'google drive.ini'))
 
 
 ### keys ######################################################################
@@ -31,7 +38,7 @@ def keys():
 ### get #######################################################################
 
 
-def get(match_string, process=True):
+def get(match_string, process=True, check_remote=True):
     '''
     Recieve a dictionary of data objects from a particular publication.
     
@@ -58,7 +65,7 @@ def get(match_string, process=True):
             print 'working up', key
             get(key)
     else:
-        # choose particular folder
+        # choose folder
         matching_folders = []
         for f in folders:
             if match_string in f:
@@ -69,6 +76,12 @@ def get(match_string, process=True):
             raise LookupError('\'' + match_string + '\' does not match any data folders')
         else:
             folder = matching_folders[0]
+        key = os.path.basename(folder)
+        # download
+        if check_remote:
+            directory = os.path.join(d, key)
+            folder_id = google_drive_ini.get('id', key)
+            shared.download(folder_id, directory)
         # get data dictionary
         module = imp.load_source('workup', os.path.join(folder, 'workup.py'))
         if process:

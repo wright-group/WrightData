@@ -1,16 +1,19 @@
+'''
+First Created 2016/05/05 by Blaise Thompson
+
+Last Edited 2016/05/05 by Blaise Thompson
+
+Contributors: Blaise Thompson
+'''
+
 ### import ####################################################################
 
 
 import os
-import itertools
+import imp
 import collections
-from distutils import util
 
-import scipy
-from scipy.optimize import leastsq
-from scipy.interpolate import griddata, interp1d, interp2d, UnivariateSpline
-
-import numpy as np
+import ConfigParser
 
 import WrightTools as wt
 
@@ -19,6 +22,11 @@ import WrightTools as wt
 
 
 directory = os.path.dirname(__file__)
+key = os.path.basename(directory)
+package_folder = os.path.dirname(directory)
+shared_module = imp.load_source('shared', os.path.join(package_folder, 'shared.py'))
+google_drive_ini = ConfigParser.SafeConfigParser()
+google_drive_ini.read(os.path.join(package_folder, 'google drive.ini'))
 
 raw_dictionary = collections.OrderedDict()
 processed_dictionary = collections.OrderedDict()
@@ -27,13 +35,11 @@ processed_dictionary = collections.OrderedDict()
 ### download ##################################################################
 
 
-try:
-    drive = wt.google_drive.Drive()
-    ids = drive.list_folder('0BzJTClorMBuwcldzTTA3cXpJVkU')
-    for fileid in ids:
-        drive.download(fileid, directory=directory)
-except:
-    pass
+bypass_download = False
+
+if __name__ == '__main__' and not bypass_download:
+    folder_id = google_drive_ini.get('id', key)
+    shared_module.download(folder_id, directory)
 
 
 ### absorbance ################################################################
@@ -51,83 +57,56 @@ except:
 ### on diagonal 2D delay ######################################################
 
 
-# raw and processed are identical in this case
-out_path = os.path.join(directory, 'on diagonal 2D delay.p')
-
-force_workup = False
-
 def workup():
     folder = os.path.join(directory, 'on diagonal 2D delay')
     files = wt.kit.glob_handler('', folder=folder)
     data = wt.data.from_KENT(files, name='PbSe')
-    # fine tune constants for clarity
+    # fine tune constant labels for clarity
     constant = data.constants[1]
-    constant.label_seed = ['1', 'm', '2',]
+    constant.label_seed = ['1', 'm', '2']
     data.constants = [constant]
     # finish
-    data.save(out_path)
+    data.save(os.path.join(directory, 'on diagonal 2D delay.p'))
     return data, data.copy()
 
-# get from pickle or create
-if os.path.isfile(out_path) and not force_workup:
-    raw_data = wt.data.from_pickle(out_path, verbose=False)
-    processed_data = raw_data.copy()
-else:
-    raw_data, processed_data = workup()
+# force workup
+if False:
+    workup()
 
-# check version
-if raw_data is None:
-    pass
-elif not raw_data.__version__.split('.')[0] == wt.__version__.split('.')[0]:
-    raw_data, processed_data = workup()
-
-# add to dictionaries
-dict_name = 'on diagonal 2D delay'
-raw_dictionary[dict_name] = raw_data
-processed_dictionary[dict_name] = processed_data
+# automatically process
+kwargs = {}
+kwargs['key'] = 'on diagonal 2D delay'
+kwargs['raw_pickle_path'] = os.path.join(directory, 'on diagonal 2D delay.p')
+kwargs['processed_pickle_path'] = os.path.join(directory, 'on diagonal 2D delay.p')
+shared_module.process(workup_method=workup, raw_dictionary=raw_dictionary,
+                      processed_dictionary=processed_dictionary, **kwargs)
 
 
 ### off diagonal 2D delay #####################################################
 
 
-# raw and processed are identical in this case
-out_path = os.path.join(directory, 'off diagonal 2D delay.p')
-
-force_workup = False
-
 def workup():
     folder = os.path.join(directory, 'off diagonal 2D delay')
     files = wt.kit.glob_handler('', folder=folder)
     data = wt.data.from_KENT(files, name='PbSe')
-    data.save(out_path)
+    data.save(os.path.join(directory, 'off diagonal 2D delay.p'))
     return data, data.copy()
 
-# get from pickle or create
-if os.path.isfile(out_path) and not force_workup:
-    raw_data = wt.data.from_pickle(out_path, verbose=False)
-    processed_data = raw_data.copy()
-else:
-    raw_data, processed_data = workup()
+# force workup
+if False:
+    workup()
 
-# check version
-if raw_data is None:
-    pass
-elif not raw_data.__version__.split('.')[0] == wt.__version__.split('.')[0]:
-    raw_data, processed_data = workup()
-
-# add to dictionaries
-dict_name = 'off diagonal 2D delay'
-raw_dictionary[dict_name] = raw_data
-processed_dictionary[dict_name] = processed_data
+# automatically process
+kwargs = {}
+kwargs['key'] = 'off diagonal 2D delay'
+kwargs['raw_pickle_path'] = os.path.join(directory, 'off diagonal 2D delay.p')
+kwargs['processed_pickle_path'] = os.path.join(directory, 'off diagonal 2D delay.p')
+shared_module.process(workup_method=workup, raw_dictionary=raw_dictionary,
+                      processed_dictionary=processed_dictionary, **kwargs)
 
 
 ### high resolution 2D delay a ################################################
 
-
-# raw and processed are identical in this case
-out_path = os.path.join(directory, 'high resolution 2D delay a.p')
-
-force_workup = False
 
 def workup():
     folder = os.path.join(directory, 'high resolution 2D delay a')
@@ -136,57 +115,40 @@ def workup():
     # enforce good behavior
     data = data.split('d1', 3, direction='above')[0]
     # finish
-    data.save(out_path)
-    return data, data.copy()
+    data.save(os.path.join(directory, 'high resolution 2D delay a.p'))
+    return data, data
 
-# get from pickle or create
-if os.path.isfile(out_path) and not force_workup:
-    raw_data = wt.data.from_pickle(out_path, verbose=False)
-    processed_data = raw_data.copy()
-else:
-    raw_data, processed_data = workup()
+# force workup
+if False:
+    workup()
 
-# check version
-if raw_data is None:
-    pass
-elif not raw_data.__version__.split('.')[0] == wt.__version__.split('.')[0]:
-    raw_data, processed_data = workup()
-
-# add to dictionaries
-dict_name = 'high resolution 2D delay a'
-raw_dictionary[dict_name] = raw_data
-processed_dictionary[dict_name] = processed_data
+# automatically process
+kwargs = {}
+kwargs['key'] = 'high resolution 2D delay a'
+kwargs['raw_pickle_path'] = os.path.join(directory, 'high resolution 2D delay a.p')
+kwargs['processed_pickle_path'] = os.path.join(directory, 'high resolution 2D delay a.p')
+shared_module.process(workup_method=workup, raw_dictionary=raw_dictionary,
+                      processed_dictionary=processed_dictionary, **kwargs)
 
 
 ### high resolution 2D delay b ################################################
 
 
-# raw and processed are identical in this case
-out_path = os.path.join(directory, 'high resolution 2D delay b.p')
-
-force_workup = False
-
 def workup():
     folder = os.path.join(directory, 'high resolution 2D delay b')
     files = wt.kit.glob_handler('', folder=folder)
     data = wt.data.from_KENT(files, name='PbSe', delay_tolerance=0.001)
-    data.save(out_path)
-    return data, data.copy()
+    data.save(os.path.join(directory, 'high resolution 2D delay b.p'))
+    return data, data
 
-# get from pickle or create
-if os.path.isfile(out_path) and not force_workup:
-    raw_data = wt.data.from_pickle(out_path, verbose=False)
-    processed_data = raw_data.copy()
-else:
-    raw_data, processed_data = workup()
+# force workup
+if False:
+    workup()
 
-# check version
-if raw_data is None:
-    pass
-elif not raw_data.__version__.split('.')[0] == wt.__version__.split('.')[0]:
-    raw_data, processed_data = workup()
-
-# add to dictionaries
-dict_name = 'high resolution 2D delay b'
-raw_dictionary[dict_name] = raw_data
-processed_dictionary[dict_name] = processed_data
+# automatically process
+kwargs = {}
+kwargs['key'] = 'high resolution 2D delay b'
+kwargs['raw_pickle_path'] = os.path.join(directory, 'high resolution 2D delay b.p')
+kwargs['processed_pickle_path'] = os.path.join(directory, 'high resolution 2D delay b.p')
+shared_module.process(workup_method=workup, raw_dictionary=raw_dictionary,
+                      processed_dictionary=processed_dictionary, **kwargs)

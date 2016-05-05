@@ -1,8 +1,19 @@
+'''
+First Created 2016/05/05 by Blaise Thompson
+
+Last Edited 2016/05/05 by Blaise Thompson
+
+Contributors: Blaise Thompson, Kyle Czech
+'''
+
 ### import ####################################################################
 
 
 import os
+import imp
 import collections
+
+import ConfigParser
 
 import WrightTools as wt
 
@@ -11,6 +22,11 @@ import WrightTools as wt
 
 
 directory = os.path.dirname(__file__)
+key = os.path.basename(directory)
+package_folder = os.path.dirname(directory)
+shared_module = imp.load_source('shared', os.path.join(package_folder, 'shared.py'))
+google_drive_ini = ConfigParser.SafeConfigParser()
+google_drive_ini.read(os.path.join(package_folder, 'google drive.ini'))
 
 raw_dictionary = collections.OrderedDict()
 processed_dictionary = collections.OrderedDict()
@@ -19,68 +35,65 @@ processed_dictionary = collections.OrderedDict()
 ### download ##################################################################
 
 
-try:
-    drive = wt.google_drive.Drive()
-    ids = drive.list_folder('0BzJTClorMBuwRW94Z1N0anEwblU')
-    for fileid in ids:
-        drive.download(fileid, directory=directory)
-except Exception as inst:
-    print inst
+bypass_download = False
+
+if __name__ == '__main__' and not bypass_download:
+    folder_id = google_drive_ini.get('id', key)
+    shared_module.download(folder_id, directory)
 
 
 ### movie #####################################################################
 
 
-def workup_movie():
+raw_pickle_path = os.path.join(directory, 'raw_movie.p')
+processed_pickle_path = os.path.join(directory, 'processed_movie.p')
+
+def workup():
     # raw
     data_paths = wt.kit.glob_handler('.dat', folder=os.path.join(directory, 'movie'))
     raw_movie = wt.data.from_COLORS(data_paths, name='MoS2 TrEE Movie')
-    raw_movie.save(os.path.join(directory, 'raw_movie.p'))
+    raw_movie.save(raw_pickle_path)
     # processed
     processed_movie = raw_movie.copy()
     processed_movie.level('ai0', 'd2', -3)
     processed_movie.smooth([2, 2, 0], channel='ai0')
     processed_movie.scale(channel='ai0', kind='amplitude')
     processed_movie.normalize(channel='ai0')
-    processed_movie.save(os.path.join(directory, 'processed_movie.p'))
+    processed_movie.save(processed_pickle_path)
     # finish
     return raw_movie, processed_movie
 
-# get from pickle or create
-if os.path.isfile(os.path.join(directory, 'raw_movie.p')):
-    raw_movie = wt.data.from_pickle(os.path.join(directory, 'raw_movie.p'), verbose=False)
-    processed_movie = wt.data.from_pickle(os.path.join(directory, 'processed_movie.p'), verbose=False)
-else:
-    raw_movie, processed_movie = workup_movie()
+# force workup
+if False:
+    workup()
 
-# check version
-if not raw_movie.__version__.split('.')[0] == wt.__version__.split('.')[0]:
-    raw_movie, processed_movie = workup_movie()
-
-# add to dictionaries
-raw_dictionary['movie'] = raw_movie
-processed_dictionary['movie'] = processed_movie
+# automatically process
+shared_module.process(key='movie', 
+                      workup_method=workup, raw_pickle_path=raw_pickle_path,
+                      processed_pickle_path=processed_pickle_path,
+                      raw_dictionary=raw_dictionary,
+                      processed_dictionary=processed_dictionary)
 
 
 ### absorbance ################################################################
 
 
-def workup_absorbance():
+raw_pickle_path = os.path.join(directory, 'absorbance_data.p')
+processed_pickle_path = raw_pickle_path
+
+def workup():
     absorbance_path = os.path.join(directory, 'MoS2_TF_III_ebeam_1nm_Mo_onQuartz_T=300K__corrected.txt')
     absorbance_data = wt.data.from_shimadzu(absorbance_path, name='MoS2 thin film absorbance')
-    absorbance_data.save(os.path.join(directory, 'absorbance_data.p'))
-    return absorbance_data
-    
-# get from pickle or create
-if os.path.isfile(os.path.join(directory, 'absorbance_data.p')):
-    absorbance_data = wt.data.from_pickle(os.path.join(directory, 'absorbance_data.p'), verbose=False)
-else:
-    absorbance_data = workup_absorbance()
-    
-# check version
-if not absorbance_data.__version__.split('.')[0] == wt.__version__.split('.')[0]:
-    absorbance_data = workup_absorbance()
-    
-# add to dictionaries
-raw_dictionary['absorbance'] = absorbance_data
-processed_dictionary['absorbance'] = absorbance_data
+    absorbance_data.save(raw_pickle_path)
+    return absorbance_data, absorbance_data
+
+# force workup
+if False:
+    workup()
+
+# automatically process
+shared_module.process(key='absorbance', 
+                      workup_method=workup, raw_pickle_path=raw_pickle_path,
+                      processed_pickle_path=processed_pickle_path,
+                      raw_dictionary=raw_dictionary,
+                      processed_dictionary=processed_dictionary)
