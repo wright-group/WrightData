@@ -1,7 +1,7 @@
 '''
 First Created 2016/05/05 by Blaise Thompson
 
-Last Edited 2016/05/05 by Blaise Thompson
+Last Edited 2016/05/06 by Blaise Thompson
 
 Contributors: Blaise Thompson
 '''
@@ -57,6 +57,9 @@ if __name__ == '__main__' and not bypass_download:
 ### on diagonal 2D delay ######################################################
 
 
+raw_pickle_path = os.path.join(directory, 'on diagonal 2D delay.p')
+processed_pickle_path = raw_pickle_path
+
 def workup():
     folder = os.path.join(directory, 'on diagonal 2D delay')
     files = wt.kit.glob_handler('', folder=folder)
@@ -66,7 +69,7 @@ def workup():
     constant.label_seed = ['1', 'm', '2']
     data.constants = [constant]
     # finish
-    data.save(os.path.join(directory, 'on diagonal 2D delay.p'))
+    data.save(raw_pickle_path)
     return data, data.copy()
 
 # force workup
@@ -74,22 +77,24 @@ if False:
     workup()
 
 # automatically process
-kwargs = {}
-kwargs['key'] = 'on diagonal 2D delay'
-kwargs['raw_pickle_path'] = os.path.join(directory, 'on diagonal 2D delay.p')
-kwargs['processed_pickle_path'] = os.path.join(directory, 'on diagonal 2D delay.p')
-shared_module.process(workup_method=workup, raw_dictionary=raw_dictionary,
-                      processed_dictionary=processed_dictionary, **kwargs)
+shared_module.process(key='on diagonal 2D delay', 
+                      workup_method=workup, raw_pickle_path=raw_pickle_path,
+                      processed_pickle_path=processed_pickle_path,
+                      raw_dictionary=raw_dictionary,
+                      processed_dictionary=processed_dictionary)
 
 
 ### off diagonal 2D delay #####################################################
 
 
+raw_pickle_path = os.path.join(directory, 'off diagonal 2D delay.p')
+processed_pickle_path = raw_pickle_path
+
 def workup():
     folder = os.path.join(directory, 'off diagonal 2D delay')
     files = wt.kit.glob_handler('', folder=folder)
     data = wt.data.from_KENT(files, name='PbSe')
-    data.save(os.path.join(directory, 'off diagonal 2D delay.p'))
+    data.save(raw_pickle_path)
     return data, data.copy()
 
 # force workup
@@ -97,16 +102,18 @@ if False:
     workup()
 
 # automatically process
-kwargs = {}
-kwargs['key'] = 'off diagonal 2D delay'
-kwargs['raw_pickle_path'] = os.path.join(directory, 'off diagonal 2D delay.p')
-kwargs['processed_pickle_path'] = os.path.join(directory, 'off diagonal 2D delay.p')
-shared_module.process(workup_method=workup, raw_dictionary=raw_dictionary,
-                      processed_dictionary=processed_dictionary, **kwargs)
+shared_module.process(key='off diagonal 2D delay', 
+                      workup_method=workup, raw_pickle_path=raw_pickle_path,
+                      processed_pickle_path=processed_pickle_path,
+                      raw_dictionary=raw_dictionary,
+                      processed_dictionary=processed_dictionary)
 
 
 ### high resolution 2D delay a ################################################
 
+
+raw_pickle_path = os.path.join(directory, 'high resolution 2D delay a.p')
+processed_pickle_path = raw_pickle_path
 
 def workup():
     folder = os.path.join(directory, 'high resolution 2D delay a')
@@ -115,7 +122,7 @@ def workup():
     # enforce good behavior
     data = data.split('d1', 3, direction='above')[0]
     # finish
-    data.save(os.path.join(directory, 'high resolution 2D delay a.p'))
+    data.save(raw_pickle_path)
     return data, data
 
 # force workup
@@ -123,22 +130,24 @@ if False:
     workup()
 
 # automatically process
-kwargs = {}
-kwargs['key'] = 'high resolution 2D delay a'
-kwargs['raw_pickle_path'] = os.path.join(directory, 'high resolution 2D delay a.p')
-kwargs['processed_pickle_path'] = os.path.join(directory, 'high resolution 2D delay a.p')
-shared_module.process(workup_method=workup, raw_dictionary=raw_dictionary,
-                      processed_dictionary=processed_dictionary, **kwargs)
+shared_module.process(key='high resolution 2D delay a', 
+                      workup_method=workup, raw_pickle_path=raw_pickle_path,
+                      processed_pickle_path=processed_pickle_path,
+                      raw_dictionary=raw_dictionary,
+                      processed_dictionary=processed_dictionary)
 
 
 ### high resolution 2D delay b ################################################
 
 
+raw_pickle_path = os.path.join(directory, 'high resolution 2D delay b.p')
+processed_pickle_path = raw_pickle_path
+
 def workup():
     folder = os.path.join(directory, 'high resolution 2D delay b')
     files = wt.kit.glob_handler('', folder=folder)
     data = wt.data.from_KENT(files, name='PbSe', delay_tolerance=0.001)
-    data.save(os.path.join(directory, 'high resolution 2D delay b.p'))
+    data.save(raw_pickle_path)
     return data, data
 
 # force workup
@@ -146,9 +155,8 @@ if False:
     workup()
 
 # automatically process
-kwargs = {}
-kwargs['key'] = 'high resolution 2D delay b'
-kwargs['raw_pickle_path'] = os.path.join(directory, 'high resolution 2D delay b.p')
-kwargs['processed_pickle_path'] = os.path.join(directory, 'high resolution 2D delay b.p')
-shared_module.process(workup_method=workup, raw_dictionary=raw_dictionary,
-                      processed_dictionary=processed_dictionary, **kwargs)
+shared_module.process(key='high resolution 2D delay b',
+                      workup_method=workup, raw_pickle_path=raw_pickle_path,
+                      processed_pickle_path=processed_pickle_path,
+                      raw_dictionary=raw_dictionary,
+                      processed_dictionary=processed_dictionary)

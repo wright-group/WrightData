@@ -1,7 +1,7 @@
 '''
 First Created 2016/05/05 by Blaise Thompson
 
-Last Edited 2016/05/05 by Blaise Thompson
+Last Edited 2016/05/06 by Blaise Thompson
 
 Contributors: Blaise Thompson
 '''
@@ -45,11 +45,14 @@ if __name__ == '__main__' and not bypass_download:
 ### absorbance A ##############################################################
 
 
+raw_pickle_path = os.path.join(directory, 'absorbance_A.p')
+processed_pickle_path = raw_pickle_path
+
 def workup():
     path = os.path.join(directory, 'DK-10.13.12-PbSe 011a.txt')
     data = wt.data.from_JASCO(path, name='A')
     data.convert('wn')
-    data.save(os.path.join(directory, 'absorbance_A.p'))
+    data.save(raw_pickle_path)
     return data, data.copy()
 
 # force workup
@@ -57,22 +60,24 @@ if False:
     workup()
 
 # automatically process
-kwargs = {}
-kwargs['key'] = 'absorbance A'
-kwargs['raw_pickle_path'] = os.path.join(directory, 'absorbance_A.p')
-kwargs['processed_pickle_path'] = os.path.join(directory, 'absorbance_A.p')
-shared_module.process(workup_method=workup, raw_dictionary=raw_dictionary,
-                      processed_dictionary=processed_dictionary, **kwargs)
+shared_module.process(key='absorbance A',
+                      workup_method=workup, raw_pickle_path=raw_pickle_path,
+                      processed_pickle_path=processed_pickle_path,
+                      raw_dictionary=raw_dictionary,
+                      processed_dictionary=processed_dictionary)
 
 
 ### absorbance B ##############################################################
 
 
+raw_pickle_path = os.path.join(directory, 'absorbance_B.p')
+processed_pickle_path = raw_pickle_path
+
 def workup():
     path = os.path.join(directory, 'DK-04.23.12-PbSe 010.a.txt')
     data = wt.data.from_JASCO(path, name='B')
     data.convert('wn')
-    data.save(os.path.join(directory, 'absorbance_B.p'))
+    data.save(raw_pickle_path)
     return data, data.copy()
 
 # force workup
@@ -80,22 +85,24 @@ if False:
     workup()
 
 # automatically process
-kwargs = {}
-kwargs['key'] = 'absorbance B'
-kwargs['raw_pickle_path'] = os.path.join(directory, 'absorbance_B.p')
-kwargs['processed_pickle_path'] = os.path.join(directory, 'absorbance_B.p')
-shared_module.process(workup_method=workup, raw_dictionary=raw_dictionary,
-                      processed_dictionary=processed_dictionary, **kwargs)
+shared_module.process(key='absorbance B',
+                      workup_method=workup, raw_pickle_path=raw_pickle_path,
+                      processed_pickle_path=processed_pickle_path,
+                      raw_dictionary=raw_dictionary,
+                      processed_dictionary=processed_dictionary)
 
 
 ### absorbance C ##############################################################
 
 
+raw_pickle_path = os.path.join(directory, 'absorbance_C.p')
+processed_pickle_path = raw_pickle_path
+
 def workup():
     path = os.path.join(directory, 'DK-03.20.12-PbSe 005.a.txt')
     data = wt.data.from_JASCO(path, name='C')
     data.convert('wn')
-    data.save(os.path.join(directory, 'absorbance_C.p'))
+    data.save(raw_pickle_path)
     return data, data.copy()
 
 # force workup
@@ -103,22 +110,24 @@ if False:
     workup()
 
 # automatically process
-kwargs = {}
-kwargs['key'] = 'absorbance C'
-kwargs['raw_pickle_path'] = os.path.join(directory, 'absorbance_C.p')
-kwargs['processed_pickle_path'] = os.path.join(directory, 'absorbance_C.p')
-shared_module.process(workup_method=workup, raw_dictionary=raw_dictionary,
-                      processed_dictionary=processed_dictionary, **kwargs)
+shared_module.process(key='absorbance C', 
+                      workup_method=workup, raw_pickle_path=raw_pickle_path,
+                      processed_pickle_path=processed_pickle_path,
+                      raw_dictionary=raw_dictionary,
+                      processed_dictionary=processed_dictionary)
 
 
 ### 2D frequency progression (sample A) #######################################
 
 
+raw_pickle_path = os.path.join(directory, '2D_frequencies_A.p')
+processed_pickle_path = raw_pickle_path
+
 def workup():
     folder = os.path.join(directory, '2D frequencies')
     files = wt.kit.glob_handler('.dat', folder=folder)
     data = wt.data.from_COLORS(files, name='2D frequencies A', ignore=['num', 'd1'])
-    data.save(os.path.join(directory, '2D_frequencies_A.p'))
+    data.save(raw_pickle_path)
     return data, data.copy()
 
 # force workup
@@ -126,16 +135,18 @@ if False:
     workup()
 
 # automatically process
-kwargs = {}
-kwargs['key'] = '2D frequencies A'
-kwargs['raw_pickle_path'] = os.path.join(directory, '2D_frequencies_A.p')
-kwargs['processed_pickle_path'] = os.path.join(directory, '2D_frequencies_A.p')
-shared_module.process(workup_method=workup, raw_dictionary=raw_dictionary,
-                      processed_dictionary=processed_dictionary, **kwargs)
+shared_module.process(key='2D frequencies A', 
+                      workup_method=workup, raw_pickle_path=raw_pickle_path,
+                      processed_pickle_path=processed_pickle_path,
+                      raw_dictionary=raw_dictionary,
+                      processed_dictionary=processed_dictionary)
 
 
 ### 2D delays (sample B) ######################################################
 
+
+raw_pickle_path = os.path.join(directory, '2D_delays_B.p')
+processed_pickle_path = raw_pickle_path
 
 def workup():
     folder = os.path.join(directory, '2D delays')
@@ -143,7 +154,7 @@ def workup():
     data = wt.data.from_COLORS(files, name='2D delays B')
     data.d1.points *= -1  # invert d1s
     data.flip('d1')
-    data.save(os.path.join(directory, '2D_delays_B.p'))
+    data.save(raw_pickle_path)
     return data, data.copy()
 
 # force workup
@@ -151,12 +162,11 @@ if False:
     workup()
 
 # automatically process
-kwargs = {}
-kwargs['key'] = '2D delays B'
-kwargs['raw_pickle_path'] = os.path.join(directory, '2D_delays_B.p')
-kwargs['processed_pickle_path'] = os.path.join(directory, '2D_delays_B.p')
-shared_module.process(workup_method=workup, raw_dictionary=raw_dictionary,
-                      processed_dictionary=processed_dictionary, **kwargs)
+shared_module.process(key='2D delays B', 
+                      workup_method=workup, raw_pickle_path=raw_pickle_path,
+                      processed_pickle_path=processed_pickle_path,
+                      raw_dictionary=raw_dictionary,
+                      processed_dictionary=processed_dictionary)
 
 
 ### diagonal wigner (sample C) ################################################

@@ -1,3 +1,12 @@
+'''
+First Created 2016/05/06 by Blaise Thompson
+
+Last Edited 2016/05/06 by Blaise Thompson
+
+Contributors: Dan Kohler, Blaise Thompson
+'''
+
+
 ### import ####################################################################
 
 
@@ -5,6 +14,8 @@ import os
 import itertools
 import collections
 from distutils import util
+
+import ConfigParser
 
 import scipy
 from scipy.optimize import leastsq
@@ -29,6 +40,11 @@ import WrightTools as wt
 
 
 directory = os.path.dirname(__file__)
+key = os.path.basename(directory)
+package_folder = os.path.dirname(directory)
+shared_module = imp.load_source('shared', os.path.join(package_folder, 'shared.py'))
+google_drive_ini = ConfigParser.SafeConfigParser()
+google_drive_ini.read(os.path.join(package_folder, 'google drive.ini'))
 
 raw_dictionary = collections.OrderedDict()
 processed_dictionary = collections.OrderedDict()
@@ -37,22 +53,18 @@ processed_dictionary = collections.OrderedDict()
 ### download ##################################################################
 
 
-try:
-    drive = wt.google_drive.Drive()
-    ids = drive.list_folder('0BzJTClorMBuwWkpRbDlLZHdmSXc')
-    for fileid in ids:
-        drive.download(fileid, directory=directory)
-except Exception as inst:
-    print inst
+bypass_download = False
+
+if __name__ == '__main__' and not bypass_download:
+    folder_id = google_drive_ini.get('id', key)
+    shared_module.download(folder_id, directory)
 
 
 ### simulation overview 2D frequency (without smear) ##########################
 
 
-# raw and processed are identical in this case
-out_path = os.path.join(directory, 'simulation_overview.p')
-
-force_workup = False
+raw_pickle_path = os.path.join(directory, 'simulation_overview.p')
+processed_pickle_path = raw_pickle_path
 
 def workup():
     trive.exp.set_coord(trive.d1, 100.)
@@ -83,34 +95,26 @@ def workup():
     data.scale()  # stored as amplitude level
     data.normalize()
     # save
-    data.save(out_path)
+    data.save(raw_pickle_path)
     return data, data.copy()
 
-# get from pickle or create
-if os.path.isfile(os.path.join(directory, out_path)) and not force_workup:
-    raw_data = wt.data.from_pickle(os.path.join(directory, out_path), verbose=False)
-    processed_data = raw_data.copy()
-else:
-    raw_data, processed_data = workup()
+# force workup
+if False:
+    workup()
 
-# check version
-if raw_data is None:
-    pass
-elif not raw_data.__version__.split('.')[0] == wt.__version__.split('.')[0]:
-    raw_data, processed_data = workup()
-
-# add to dictionaries
-raw_dictionary['simulation overview'] = raw_data
-processed_dictionary['simulation overview'] = processed_data
+# automatically process
+shared_module.process(key='simulation overview', 
+                      workup_method=workup, raw_pickle_path=raw_pickle_path,
+                      processed_pickle_path=processed_pickle_path,
+                      raw_dictionary=raw_dictionary,
+                      processed_dictionary=processed_dictionary)
 
 
 ### simulation overview 2D frequency (with smear) #############################
 
 
-# raw and processed are identical in this case
-out_path = os.path.join(directory, 'simulation_overview_smeared.p')
-
-force_workup = False
+raw_pickle_path = os.path.join(directory, 'simulation_overview_smeared.p')
+processed_pickle_path = raw_pickle_path
 
 def workup():
     trive.exp.set_coord(trive.d1, 100.)
@@ -146,23 +150,16 @@ def workup():
     data.scale()  # stored as amplitude level
     data.normalize()
     # save
-    data.save(out_path)
+    data.save(raw_pickle_path)
     return data, data.copy()
 
-# get from pickle or create
-if os.path.isfile(os.path.join(directory, out_path)) and not force_workup:
-    raw_data = wt.data.from_pickle(os.path.join(directory, out_path), verbose=False)
-    processed_data = raw_data.copy()
-else:
-    raw_data, processed_data = workup()
+# force workup
+if False:
+    workup()
 
-# check version
-if raw_data is None:
-    pass
-elif not raw_data.__version__.split('.')[0] == wt.__version__.split('.')[0]:
-    raw_data, processed_data = workup()
-
-# add to dictionaries
-raw_dictionary['simulation overview smeared'] = raw_data
-processed_dictionary['simulation overview smeared'] = processed_data
-
+# automatically process
+shared_module.process(key='simulation overview smeared', 
+                      workup_method=workup, raw_pickle_path=raw_pickle_path,
+                      processed_pickle_path=processed_pickle_path,
+                      raw_dictionary=raw_dictionary,
+                      processed_dictionary=processed_dictionary)
