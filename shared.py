@@ -41,4 +41,4 @@ def process(key, workup_method, raw_dictionary, processed_dictionary,
         raw_movie, processed_movie = workup_method()
     # add to dictionaries
     raw_dictionary[key] = raw
-    processed_dictionary[processed] = processed
+    processed_dictionary[key] = processed
