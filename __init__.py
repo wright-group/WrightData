@@ -7,11 +7,15 @@ Handle getting of data objects from repository subfolders.
 
 import os
 import imp
+import sys
 import collections
 
-import ConfigParser
+try:
+    import configparser as ConfigParser  # python 3
+except ImportError:
+    import ConfigParser as ConfigParser  # python 2
 
-import shared
+from . import shared
 
 
 ### define ####################################################################
@@ -20,8 +24,10 @@ import shared
 d = os.path.dirname(__file__)
 
 folders = [os.path.join(d,o) for o in os.listdir(d) if os.path.isdir(os.path.join(d,o)) and not '.git' in o]
-
-google_drive_ini = ConfigParser.SafeConfigParser()
+if sys.version[0] == '3':
+    google_drive_ini = ConfigParser.ConfigParser()
+else:
+    google_drive_ini = ConfigParser.SafeConfigParser()
 google_drive_ini.read(os.path.join(d, 'google drive.ini'))
 
 
@@ -62,7 +68,7 @@ def get(match_string, process=True, check_remote=True):
     '''
     if match_string == 'everything':
         for key in keys():
-            print 'working up', key
+            print('working up', key)
             get(key)
     else:
         # choose folder

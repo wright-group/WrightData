@@ -1,7 +1,7 @@
 '''
 First Created 2016/05/06 by Blaise Thompson
 
-Last Edited 2016/05/06 by Blaise Thompson
+Last Edited 2016/08/01 by Blaise Thompson
 
 Contributors: Dan Kohler, Blaise Thompson
 '''
@@ -11,27 +11,15 @@ Contributors: Dan Kohler, Blaise Thompson
 
 
 import os
+import importlib
 import itertools
 import collections
 from distutils import util
 
-import ConfigParser
-
-import scipy
-from scipy.optimize import leastsq
-from scipy.interpolate import griddata, interp1d, interp2d, UnivariateSpline
-
-import numpy as np
-
-import NISE
-from NISE.lib import pulse
-from NISE.lib.misc.__init__ import NISE_path
-import numpy as np
-# important:  we can't call on scan directly for some reason; use trive to do it
-import NISE.lib.measure as m
-import NISE.experiments.trive as trive
-import NISE.hamiltonians.H0 as H0
-import NISE.hamiltonians.params.inhom as inhom
+try:
+    import configparser as ConfigParser  # python 3
+except ImportError:
+    import ConfigParser as ConfigParser  # python 2
 
 import WrightTools as wt
 
@@ -39,13 +27,24 @@ import WrightTools as wt
 ### define ####################################################################
 
 
+# paths
 directory = os.path.dirname(__file__)
 key = os.path.basename(directory)
 package_folder = os.path.dirname(directory)
-shared_module = imp.load_source('shared', os.path.join(package_folder, 'shared.py'))
-google_drive_ini = ConfigParser.SafeConfigParser()
+
+# shared module
+spec = importlib.util.spec_from_file_location('shared', os.path.join(package_folder, 'shared.py'))
+shared_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(shared_module)
+
+# google drive
+if sys.version[0] == '2':
+    google_drive_ini = ConfigParser.SafeConfigParser()
+else:
+    google_drive_ini = ConfigParser.ConfigParser()
 google_drive_ini.read(os.path.join(package_folder, 'google drive.ini'))
 
+# dictionaries to fill
 raw_dictionary = collections.OrderedDict()
 processed_dictionary = collections.OrderedDict()
 

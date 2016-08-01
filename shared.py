@@ -20,7 +20,7 @@ def download(folder_id, directory):
         for fileid in ids:
             drive.download(fileid, directory=directory)
     except Exception as inst:
-        print inst
+        print(inst)
 
 
 ### process ###################################################################
@@ -32,8 +32,11 @@ def process(key, workup_method, raw_dictionary, processed_dictionary,
     is_raw_pickle = os.path.isfile(raw_pickle_path)
     is_processed_pickle = os.path.isfile(processed_pickle_path)
     if is_raw_pickle and is_processed_pickle:
-        raw = wt.data.from_pickle(raw_pickle_path, verbose=False)
-        processed = wt.data.from_pickle(processed_pickle_path, verbose=False)
+        try:
+            raw = wt.data.from_pickle(raw_pickle_path, verbose=False)
+            processed = wt.data.from_pickle(processed_pickle_path, verbose=False)
+        except UnicodeDecodeError:  # pickles written in wrong version of python, probably
+            raw, processed = workup_method()
     else:
         raw, processed = workup_method()
     # check version (should be identical, check only processed)
