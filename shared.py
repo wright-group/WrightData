@@ -6,15 +6,44 @@ Methods shared accross WrightData.
 
 
 import os
+import sys
+import configparser
 
 import WrightTools as wt
+
+
+### define ####################################################################
+
+
+package_folder = os.path.dirname(__file__)
+
+
+### open configs ##############################################################
+
+
+def get_config(filename):
+    ini = configparser.ConfigParser()
+    path = os.path.join(package_folder, filename)
+    ini.read(path)
+    return dict(ini.items('id'))  # return a dictionary
+google_drive = get_config('google drive.ini')
+google_drive_private = get_config('google drive private.ini')
 
 
 ### google drive download #####################################################
 
 
-def download(folder_id, directory):
+def download(key, directory):
     try:
+        # get folder_id
+        key = key.lower()
+        if key in google_drive.keys():
+            folder_id = google_drive[key]
+        elif key in google_drive_private.keys():
+            folder_id = google_drive_private[key]
+        else:
+            raise Exception('key invalid')
+        # get files
         drive = wt.google_drive.Drive()
         ids = drive.list_folder(folder_id)
         for fileid in ids:

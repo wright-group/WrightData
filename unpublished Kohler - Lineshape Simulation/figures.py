@@ -39,7 +39,7 @@ cmap = wt.artists.colormaps['default']
 
 props = dict(boxstyle='square', facecolor='white', alpha=0.8)
 
-template_fname = r'npzs\dpr {0} TO {1} w1 w2 d1 d2 arr.npz'
+template_fname = os.path.join('measured', 'dpr {0} TO {1} w1 w2 d1 d2 data.hdf5')
 dprs = [0.5, 1., 2.0]
 
 
@@ -88,12 +88,13 @@ def frequency_label(sub=''):
 freq_ticks = [-1, 0, 1]
 delay_ticks = [-2, 0, 2]
 
+
 ### WMELs #####################################################################
 
 
 output_path = os.path.join(directory, 'WMELs.png')
 
-force_plotting = True
+force_plotting = False
 
 if not os.path.isfile(output_path) or force_plotting:
     # prepare for plot
@@ -103,7 +104,6 @@ if not os.path.isfile(output_path) or force_plotting:
     ax = plt.subplot(gs[:, 0])
     # plot energies
     energies = list(np.linspace(0, 0.85, 4)) + [1]
-    print energies
     for energy in energies:
         ax.axhline(energy, color='k', linewidth=2, ls='-')
     # add arrow method for subplot a
@@ -296,7 +296,7 @@ output_path = os.path.join(directory, 'simulation_overview.png')
 
 force_plotting = False
 
-if not os.path.isfile(output_path) or force_plotting:
+if False:#not os.path.isfile(output_path) or force_plotting:
     # prepare for plot
     fig, gs = wt.artists.create_figure(width='double', nrows=2, cols=[1, 1.5, 1, 'cbar'],
                                        hspace=0.75)
@@ -532,18 +532,6 @@ if not os.path.isfile(output_path) or force_plotting:
     # finish
     plt.savefig(output_path, dpi=300, transparent=True, pad_inches=1)
     plt.close('fig')
-
-
-### hamiltonian ###############################################################
-
-
-output_path = os.path.join(directory, 'hamiltonian.png')
-
-force_plotting = False
-
-if not os.path.isfile(output_path) or force_plotting:
-    pass
-    # TODO:
         
 
 ### FID v driven ##############################################################
@@ -614,10 +602,10 @@ if not os.path.isfile(output_path) or force_plotting:
         # filter for continuity
         for i in range(y3.size):
             if y3[i] > 3:
-                print i, '>'
+                print(i, '>')
                 y2[i+1:] -= np.pi
             elif y3[i] < -3:
-                print i, '<'
+                print(i, '<')
                 y2[i+1:] += np.pi
         # redefine the derivitive on y2 with disconitnuities removed
         y3 = np.diff(y2) 
@@ -707,7 +695,7 @@ if not os.path.isfile(output_path) or force_plotting:
     # data
     title = None #r'$\mathsf{\tau=w_t/2}$'          
     filepath = template_fname.format('0.5', '1')
-    npz = np.load(filepath)
+    npz = wt.kit.read_h5(filepath)
     arr = np.sqrt(npz['arr'])
     # 2D delay
     ax = plt.subplot(gs[0:2, 0:2])
@@ -847,7 +835,7 @@ if not os.path.isfile(output_path) or force_plotting:
         cmap = wt.artists.colormaps['default']
         # get data from zip
         filepath = template_fname.format(dpr, 'all')
-        npz = np.load(filepath)
+        npz = wt.kit.read_h5(filepath)
         d1 = -npz['d1']/50.
         d2 = -npz['d2']/50.
         arr = np.sqrt(npz['arr'][20, 20].T)
@@ -866,7 +854,7 @@ if not os.path.isfile(output_path) or force_plotting:
         wt.artists.diagonal_line(d1, d2, ax=ax, c='k', ls='-', lw=2)
         def plot_contours(TO, manual):
             filepath = template_fname.format(dpr, TO)
-            npz = np.load(filepath)
+            npz = wt.kit.read_h5(filepath)
             d1 = -npz['d1']/50.
             d2 = -npz['d2']/50.
             arr = np.sqrt(npz['arr'][20, 20].T)
@@ -904,7 +892,7 @@ if not os.path.isfile(output_path) or force_plotting:
         ax.grid()
         def plot_slice(TO):
             filepath = template_fname.format(dpr, TO)
-            npz = np.load(filepath)
+            npz = wt.kit.read_h5(filepath)
             arr = np.sqrt(npz['arr'][20, 20].T)
             arr /= amps_max
             ax.plot(xi, arr[10], lw=2)
@@ -937,3 +925,52 @@ if not os.path.isfile(output_path) or force_plotting:
     # finish
     plt.savefig(output_path, dpi=300, transparent=True, pad_inches=1)
     plt.close('fig')
+
+
+### wigners ###################################################################
+
+
+output_path = os.path.join(directory, 'wigners.png')
+
+force_plotting = False
+
+if not os.path.isfile(output_path) or force_plotting:
+    cmap = wt.artists.colormaps['default']
+    def plot(ax, npz, w2_position):
+        w2_d = {'r': 15, 'c': 20, 'b': 25}    
+        w2_index = w2_d[w2_position]
+        arr = npz['arr']
+        arr = arr [:, :, ::-1, ::-1]  # reverse delay axes
+        d2 = npz['d2']
+        w2 = npz['w2']
+        w1 = npz['w1']
+        d2 = npz['d1']
+        zi = arr[:, w2_index, 11, :].T
+        xi = w1
+        yi = d2
+        levels = np.linspace(0, zi.max(), 200)
+        ax.contourf(xi, yi, zi, levels=levels, cmap=cmap)
+        ax.contour(xi, yi, zi, 11, colors='k', alpha=0.5)
+        ax.axhline(0, c='k', lw=1)
+        ax.axvline(w2[w2_index], lw=4, alpha=0.25, c='k')
+        ax.grid()
+        ax.set_xlim(6500, 7500)
+    fig, gs = wt.artists.create_figure(nrows=1, cols=[1, 1, 1, 'cbar'], width='double')
+    d = wt.kit.read_h5(os.path.join('measured', 'dpr 1.0 TO all w1 w2 d1 d2 data.hdf5'))
+    # red
+    ax = plt.subplot(gs[0, 0])
+    plot(ax, d, 'r')
+    ax.set_title(r'$\mathsf{\tau=w_t}$', fontsize=18)
+    # center
+    ax = plt.subplot(gs[0, 1])
+    plot(ax, d, 'c')
+    # blue
+    ax = plt.subplot(gs[0, 2])
+    plot(ax, d, 'b')
+    # finish ------------------------------------------------------------------
+    # cmap
+    cax = plt.subplot(gs[:, -1])
+    wt.artists.plot_colorbar(cax=cax, label='amplitude')
+    # finish
+    plt.savefig('wigners.png', dpi=300, transparent=True, pad_inches=1)
+    plt.close(fig)

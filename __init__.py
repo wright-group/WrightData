@@ -2,6 +2,7 @@
 Handle getting of data objects from repository subfolders.
 '''
 
+
 ### import ####################################################################
 
 
@@ -10,12 +11,7 @@ import imp
 import sys
 import collections
 
-try:
-    import configparser as ConfigParser  # python 3
-except ImportError:
-    import ConfigParser as ConfigParser  # python 2
-
-from . import shared
+import configparser
 
 
 ### define ####################################################################
@@ -24,11 +20,18 @@ from . import shared
 d = os.path.dirname(__file__)
 
 folders = [os.path.join(d,o) for o in os.listdir(d) if os.path.isdir(os.path.join(d,o)) and not '.git' in o]
-if sys.version[0] == '3':
-    google_drive_ini = ConfigParser.ConfigParser()
-else:
-    google_drive_ini = ConfigParser.SafeConfigParser()
-google_drive_ini.read(os.path.join(d, 'google drive.ini'))
+
+
+### google drive config #######################################################
+
+
+# create private google drive file if none exists
+google_drive_private_path = os.path.join(d, 'google drive private.ini')
+if not os.path.isfile(google_drive_private_path):
+    with open(google_drive_private_path, 'w') as f:
+        ini = configparser.ConfigParser()
+        ini.add_section('id')
+        ini.write(f)
 
 
 ### keys ######################################################################
@@ -85,9 +88,9 @@ def get(match_string, process=True, check_remote=True):
         key = os.path.basename(folder)
         # download
         if check_remote:
-            directory = os.path.join(d, key)
-            folder_id = google_drive_ini.get('id', key)
-            shared.download(folder_id, directory)
+            from . import shared
+            directory = os.path.join(d, key)            
+            shared.download(key, directory)
         # get data dictionary
         module = imp.load_source('workup', os.path.join(folder, 'workup.py'))
         if process:

@@ -1,6 +1,12 @@
 *
+
+!/1*
+!/2*
+!/u*
 !LICENSE
 !*.gitignore
 !*.py
 !*.md
 !*.ini
+
+*private*
