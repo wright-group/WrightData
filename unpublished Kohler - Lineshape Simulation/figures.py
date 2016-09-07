@@ -10,6 +10,8 @@ import matplotlib.gridspec as grd
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import matplotlib.patheffects as PathEffects
+from matplotlib.patches import Ellipse
 plt.close('all')
 matplotlib.rcParams['text.usetex'] = True
 matplotlib.rcParams['text.latex.unicode'] = True
@@ -42,6 +44,12 @@ coolwarm = plt.get_cmap('coolwarm_r')
 
 props = dict(boxstyle='square', facecolor='white', alpha=0.8)
 
+def adjust_spines(ax, color, lw=3):
+    for key in ['bottom', 'top', 'right', 'left']:
+        ax.spines[key].set_color(color)
+        ax.spines[key].set_linewidth(lw)
+        ax.spines[key].zorder = 1000
+
 def zoom_arrs(*args):
     return [ndimage.interpolation.zoom(arr, 5) for arr in args]
 
@@ -67,9 +75,9 @@ def normalized_gauss(t, FWHM):
 
 def delay_label(kind):
     if kind == 1:
-        return r'$\mathsf{\tau_{22^{\prime}}/w_t}$'
+        return r'$\mathsf{\tau_{22^{\prime}}/\Delta_t}$'
     elif kind == 2:
-        return r'$\mathsf{\tau_{21}/w_t}$'
+        return r'$\mathsf{\tau_{21}/\Delta_t}$'
     else:
         return None
 
@@ -148,129 +156,129 @@ if not os.path.isfile(output_path) or force_plotting:
     # pathway 1 alpha
     ax = plt.subplot(gs[0, 2])
     wmel = wt.diagrams.WMEL.Subplot(ax=ax, energies=energies, interactions=4, title='I')
-    wmel.add_arrow(0, [0, 1], 'ket', '1', color='r')
-    wmel.add_arrow(1, [0, 1], 'bra', '2', color='b')
-    wmel.add_arrow(2, [1, 0], 'bra', '2\'', color='b')
-    wmel.add_arrow(3, [1, 0], 'out', '', color='r')
+    wmel.add_arrow(0, [0, 1], 'ket', '1', color='orange')
+    wmel.add_arrow(1, [0, 1], 'bra', '2', color='m')
+    wmel.add_arrow(2, [1, 0], 'bra', '2\'', color='m')
+    wmel.add_arrow(3, [1, 0], 'out', '', color='grey')
     for i in range(len(energies)):
         ax.text(-state_text_buffer, energies[i], state_names[i], fontsize=12, verticalalignment='center', horizontalalignment ='right')
     # pathway 1 beta
     ax = plt.subplot(gs[1, 2])
     wmel = wt.diagrams.WMEL.Subplot(ax=ax, energies=energies, interactions=4)
-    wmel.add_arrow(0, [0, 1], 'ket', '1', color='r')
-    wmel.add_arrow(1, [0, 1], 'bra', '2', color='b')
-    wmel.add_arrow(2, [1, 2], 'bra', '2\'', color='b')
-    wmel.add_arrow(3, [2, 1], 'out', '', color='r')
+    wmel.add_arrow(0, [0, 1], 'ket', '1', color='orange')
+    wmel.add_arrow(1, [0, 1], 'bra', '2', color='m')
+    wmel.add_arrow(2, [1, 2], 'bra', '2\'', color='m')
+    wmel.add_arrow(3, [2, 1], 'out', '', color='grey')
     for i in range(len(energies)):
         ax.text(-state_text_buffer, energies[i], state_names[i], fontsize=12, verticalalignment='center', horizontalalignment ='right')
     # pathway 1 gamma
     ax = plt.subplot(gs[2, 2])
     wmel = wt.diagrams.WMEL.Subplot(ax=ax, energies=energies, interactions=4)
-    wmel.add_arrow(0, [0, 1], 'ket', '1', color='r')
-    wmel.add_arrow(1, [1, 0], 'ket', '2', color='b')
-    wmel.add_arrow(2, [0, 1], 'ket', '2\'', color='b')
-    wmel.add_arrow(3, [1, 0], 'out', '', color='r')
+    wmel.add_arrow(0, [0, 1], 'ket', '1', color='orange')
+    wmel.add_arrow(1, [1, 0], 'ket', '2', color='m')
+    wmel.add_arrow(2, [0, 1], 'ket', '2\'', color='m')
+    wmel.add_arrow(3, [1, 0], 'out', '', color='grey')
     for i in range(len(energies)):
         ax.text(-state_text_buffer, energies[i], state_names[i], fontsize=12, verticalalignment='center', horizontalalignment ='right')
     # pathway 2 ---------------------------------------------------------------
     # pathway 2 alpha
     ax = plt.subplot(gs[0, 3])
     wmel = wt.diagrams.WMEL.Subplot(ax=ax, energies=energies, interactions=4, title='II')
-    wmel.add_arrow(0, [0, 1], 'ket', '1', color='r')
-    wmel.add_arrow(1, [1, 2], 'ket', '2\'', color='b')
-    wmel.add_arrow(2, [2, 1], 'ket', '2', color='b')
-    wmel.add_arrow(3, [1, 0], 'out', '', color='r')
+    wmel.add_arrow(0, [0, 1], 'ket', '1', color='orange')
+    wmel.add_arrow(1, [1, 2], 'ket', '2\'', color='m')
+    wmel.add_arrow(2, [2, 1], 'ket', '2', color='m')
+    wmel.add_arrow(3, [1, 0], 'out', '', color='grey')
     # pathway 2 beta
     ax = plt.subplot(gs[1, 3])
     wmel = wt.diagrams.WMEL.Subplot(ax=ax, energies=energies, interactions=4)
-    wmel.add_arrow(0, [0, 1], 'ket', '1', color='r')
-    wmel.add_arrow(1, [1, 2], 'ket', '2\'', color='b')
-    wmel.add_arrow(2, [0, 1], 'bra', '2', color='b')
-    wmel.add_arrow(3, [2, 1], 'out', '', color='r')
+    wmel.add_arrow(0, [0, 1], 'ket', '1', color='orange')
+    wmel.add_arrow(1, [1, 2], 'ket', '2\'', color='m')
+    wmel.add_arrow(2, [0, 1], 'bra', '2', color='m')
+    wmel.add_arrow(3, [2, 1], 'out', '', color='grey')
     # pathway 3 ---------------------------------------------------------------
     # pathway 3 alpha
     ax = plt.subplot(gs[0, 4])
     wmel = wt.diagrams.WMEL.Subplot(ax=ax, energies=energies, interactions=4, title='III')
-    wmel.add_arrow(0, [0, 1], 'bra', '2', color='b')
-    wmel.add_arrow(1, [0, 1], 'ket', '1', color='r')
-    wmel.add_arrow(2, [1, 0], 'bra', '2\'', color='b')
-    wmel.add_arrow(3, [1, 0], 'out', '', color='r')
+    wmel.add_arrow(0, [0, 1], 'bra', '2', color='m')
+    wmel.add_arrow(1, [0, 1], 'ket', '1', color='orange')
+    wmel.add_arrow(2, [1, 0], 'bra', '2\'', color='m')
+    wmel.add_arrow(3, [1, 0], 'out', '', color='grey')
     # pathway 3 beta
     ax = plt.subplot(gs[1, 4])
     wmel = wt.diagrams.WMEL.Subplot(ax=ax, energies=energies, interactions=4)
-    wmel.add_arrow(0, [0, 1], 'bra', '2', color='b')
-    wmel.add_arrow(1, [0, 1], 'ket', '1', color='r')
-    wmel.add_arrow(2, [1, 2], 'ket', '2\'', color='b')
-    wmel.add_arrow(3, [2, 1], 'out', '', color='r')
+    wmel.add_arrow(0, [0, 1], 'bra', '2', color='m')
+    wmel.add_arrow(1, [0, 1], 'ket', '1', color='orange')
+    wmel.add_arrow(2, [1, 2], 'ket', '2\'', color='m')
+    wmel.add_arrow(3, [2, 1], 'out', '', color='grey')
     # pathway 3 gamma
     ax = plt.subplot(gs[2, 4])
     wmel = wt.diagrams.WMEL.Subplot(ax=ax, energies=energies, interactions=4)
-    wmel.add_arrow(0, [0, 1], 'bra', '2', color='b')
-    wmel.add_arrow(1, [1, 0], 'bra', '1', color='r')
-    wmel.add_arrow(2, [0, 1], 'ket', '2\'', color='b')
-    wmel.add_arrow(3, [1, 0], 'out', '', color='r')
+    wmel.add_arrow(0, [0, 1], 'bra', '2', color='m')
+    wmel.add_arrow(1, [1, 0], 'bra', '1', color='orange')
+    wmel.add_arrow(2, [0, 1], 'ket', '2\'', color='m')
+    wmel.add_arrow(3, [1, 0], 'out', '', color='grey')
     # pathway 4 ---------------------------------------------------------------
     # pathway 4 alpha
     ax = plt.subplot(gs[0, 5])
     wmel = wt.diagrams.WMEL.Subplot(ax=ax, energies=energies, interactions=4, title='IV')
-    wmel.add_arrow(0, [0, 1], 'ket', '2\'', color='b')
-    wmel.add_arrow(1, [1, 2], 'ket', '1', color='r')
-    wmel.add_arrow(2, [2, 1], 'ket', '2', color='b')
-    wmel.add_arrow(3, [1, 0], 'out', '', color='r')
+    wmel.add_arrow(0, [0, 1], 'ket', '2\'', color='m')
+    wmel.add_arrow(1, [1, 2], 'ket', '1', color='orange')
+    wmel.add_arrow(2, [2, 1], 'ket', '2', color='m')
+    wmel.add_arrow(3, [1, 0], 'out', '', color='grey')
     # pathway 4 beta
     ax = plt.subplot(gs[1, 5])
     wmel = wt.diagrams.WMEL.Subplot(ax=ax, energies=energies, interactions=4)
-    wmel.add_arrow(0, [0, 1], 'ket', '2\'', color='b')
-    wmel.add_arrow(1, [1, 2], 'ket', '1', color='r')
-    wmel.add_arrow(2, [0, 1], 'bra', '2', color='b')
-    wmel.add_arrow(3, [2, 1], 'out', '', color='r')
+    wmel.add_arrow(0, [0, 1], 'ket', '2\'', color='m')
+    wmel.add_arrow(1, [1, 2], 'ket', '1', color='orange')
+    wmel.add_arrow(2, [0, 1], 'bra', '2', color='m')
+    wmel.add_arrow(3, [2, 1], 'out', '', color='grey')
     # pathway 5 ---------------------------------------------------------------
     # pathway 5 alpha
     ax = plt.subplot(gs[0, 6])
     wmel = wt.diagrams.WMEL.Subplot(ax=ax, energies=energies, interactions=4, title='V')
-    wmel.add_arrow(0, [0, 1], 'bra', '2', color='b')
-    wmel.add_arrow(1, [1, 0], 'bra', '2\'', color='b')
-    wmel.add_arrow(2, [0, 1], 'ket', '1', color='r')
-    wmel.add_arrow(3, [1, 0], 'out', '', color='r')
+    wmel.add_arrow(0, [0, 1], 'bra', '2', color='m')
+    wmel.add_arrow(1, [1, 0], 'bra', '2\'', color='m')
+    wmel.add_arrow(2, [0, 1], 'ket', '1', color='orange')
+    wmel.add_arrow(3, [1, 0], 'out', '', color='grey')
     # pathway 5 beta
     ax = plt.subplot(gs[1, 6])
     wmel = wt.diagrams.WMEL.Subplot(ax=ax, energies=energies, interactions=4)
-    wmel.add_arrow(0, [0, 1], 'bra', '2', color='b')
-    wmel.add_arrow(1, [0, 1], 'ket', '2\'', color='b')
-    wmel.add_arrow(2, [1, 2], 'ket', '1', color='r')
-    wmel.add_arrow(3, [2, 1], 'out', '', color='r')
+    wmel.add_arrow(0, [0, 1], 'bra', '2', color='m')
+    wmel.add_arrow(1, [0, 1], 'ket', '2\'', color='m')
+    wmel.add_arrow(2, [1, 2], 'ket', '1', color='orange')
+    wmel.add_arrow(3, [2, 1], 'out', '', color='grey')
     # pathway 5 gamma
     ax = plt.subplot(gs[2, 6])
     wmel = wt.diagrams.WMEL.Subplot(ax=ax, energies=energies, interactions=4)
-    wmel.add_arrow(0, [0, 1], 'bra', '2', color='b')
-    wmel.add_arrow(1, [0, 1], 'ket', '2\'', color='b')
-    wmel.add_arrow(2, [1, 0], 'bra', '1', color='r')
-    wmel.add_arrow(3, [1, 0], 'out', '', color='r')
+    wmel.add_arrow(0, [0, 1], 'bra', '2', color='m')
+    wmel.add_arrow(1, [0, 1], 'ket', '2\'', color='m')
+    wmel.add_arrow(2, [1, 0], 'bra', '1', color='orange')
+    wmel.add_arrow(3, [1, 0], 'out', '', color='grey')
     # pathway 6 ---------------------------------------------------------------
     text_buffer = 1.3
     # pathway 6 alpha
     ax = plt.subplot(gs[0, 7])
     wmel = wt.diagrams.WMEL.Subplot(ax=ax, energies=energies, interactions=4, title='VI')
-    wmel.add_arrow(0, [0, 1], 'ket', '2\'', color='b')
-    wmel.add_arrow(1, [1, 0], 'ket', '2', color='b')
-    wmel.add_arrow(2, [0, 1], 'ket', '1', color='r')
-    wmel.add_arrow(3, [1, 0], 'out', '', color='r')
+    wmel.add_arrow(0, [0, 1], 'ket', '2\'', color='m')
+    wmel.add_arrow(1, [1, 0], 'ket', '2', color='m')
+    wmel.add_arrow(2, [0, 1], 'ket', '1', color='orange')
+    wmel.add_arrow(3, [1, 0], 'out', '', color='grey')
     ax.text(text_buffer, 0.5, r'$\mathsf{\alpha}$', fontsize=25, verticalalignment='center', horizontalalignment='left')
     # pathway 6 beta
     ax = plt.subplot(gs[1, 7])
     wmel = wt.diagrams.WMEL.Subplot(ax=ax, energies=energies, interactions=4)
-    wmel.add_arrow(0, [0, 1], 'ket', '2\'', color='b')
-    wmel.add_arrow(1, [0, 1], 'bra', '2', color='b')
-    wmel.add_arrow(2, [1, 2], 'ket', '1', color='r')
-    wmel.add_arrow(3, [2, 1], 'out', '', color='r')
+    wmel.add_arrow(0, [0, 1], 'ket', '2\'', color='m')
+    wmel.add_arrow(1, [0, 1], 'bra', '2', color='m')
+    wmel.add_arrow(2, [1, 2], 'ket', '1', color='orange')
+    wmel.add_arrow(3, [2, 1], 'out', '', color='grey')
     ax.text(text_buffer, 0.5, r'$\mathsf{\beta}$', fontsize=25, verticalalignment='center', horizontalalignment='left')
     # pathway 6 gamma
     ax = plt.subplot(gs[2, 7])
     wmel = wt.diagrams.WMEL.Subplot(ax=ax, energies=energies, interactions=4)
-    wmel.add_arrow(0, [0, 1], 'ket', '2\'', color='b')
-    wmel.add_arrow(1, [0, 1], 'bra', '2', color='b')
-    wmel.add_arrow(2, [1, 0], 'bra', '1', color='r')
-    wmel.add_arrow(3, [1, 0], 'out', '', color='r')
+    wmel.add_arrow(0, [0, 1], 'ket', '2\'', color='m')
+    wmel.add_arrow(1, [0, 1], 'bra', '2', color='m')
+    wmel.add_arrow(2, [1, 0], 'bra', '1', color='orange')
+    wmel.add_arrow(3, [1, 0], 'out', '', color='grey')
     ax.text(text_buffer, 0.5, r'$\mathsf{\gamma}$', fontsize=25, verticalalignment='center', horizontalalignment='left')
     # labels
     dist = 0.05
@@ -283,6 +291,8 @@ if not os.path.isfile(output_path) or force_plotting:
 
 
 ### simulation overview #######################################################
+# TODO: subplot b, switch coherence subscripts
+
 
 
 output_path = os.path.join(directory, 'simulation overview.png')
@@ -291,7 +301,7 @@ force_plotting = False
 
 if not os.path.isfile(output_path) or force_plotting:
     # prepare for plot
-    fig, gs = wt.artists.create_figure(width='double', nrows=2, cols=[1, 1.5, 1, 'cbar'],
+    fig, gs = wt.artists.create_figure(width='double', nrows=2, cols=[1, 0, 0, 0, 1.5, 0, 0, 0, 1, 'cbar'],
                                        hspace=0.75)
     # set of SQCs vs lab time -------------------------------------------------
     ax = plt.subplot(gs[0, 0])                         
@@ -315,8 +325,9 @@ if not os.path.isfile(output_path) or force_plotting:
     ax.grid()
     wt.artists.corner_text('a', ax=ax, fontsize=18, background_alpha=1)
     ax.set_ylabel('amplitude', fontsize=18)
+    adjust_spines(ax, 'grey')
     # evolution of density matrix terms in pw5 --------------------------------
-    ax = plt.subplot(gs[0, 1])
+    ax = plt.subplot(gs[0, 1:5])
     p = os.path.join(directory, 'precalculated', 'simulation overview b.hdf5')
     d = wt.kit.read_h5(p)
     xi = d['xi']
@@ -338,13 +349,13 @@ if not os.path.isfile(output_path) or force_plotting:
     # plot density matrix terms
     # ga
     yi = d['ga']
-    ax.plot(xi, yi, lw=2, c='g', label=r'$\mathsf{\rho_{ga}}$')
+    ax.plot(xi, yi, lw=2, c='g', label=r'$\mathsf{\rho_{01}}$')
     # aa
     yi = d['aa']
-    ax.plot(xi, yi, lw=2, c='m', label=r'$\mathsf{\rho_{aa}}$')
+    ax.plot(xi, yi, lw=2, c='m', label=r'$\mathsf{\rho_{11}}$')
     # ag2
     yi = d['ag']
-    ax.plot(xi, yi, lw=2, c='c', label=r'$\mathsf{\rho_{ag}}$')
+    ax.plot(xi, yi, lw=2, c='c', label=r'$\mathsf{\rho_{01}}$')
     # arrows
     ax.annotate('', xy=(-2, 1.05), xytext=(-4, 1.05), arrowprops=dict(arrowstyle="->", ec='k'))
     ax.annotate('', xy=(0, 1.1), xytext=(-4, 1.1), arrowprops=dict(arrowstyle="->"))
@@ -358,8 +369,9 @@ if not os.path.isfile(output_path) or force_plotting:
     wt.artists.corner_text('b', ax=ax, fontsize=18, background_alpha=1)
     ax.set_xlabel(time_label(), fontsize=18)
     plt.setp(ax.get_yticklabels(), visible=False)
+    adjust_spines(ax, 'g')
     # FT of FID above and mono pass function ----------------------------------
-    ax = plt.subplot(gs[0, 2:])
+    ax = plt.subplot(gs[0, 5:])
     p = os.path.join(directory, 'precalculated', 'simulation overview c.hdf5')
     d = wt.kit.read_h5(p)
     xi = d['xi']
@@ -380,60 +392,71 @@ if not os.path.isfile(output_path) or force_plotting:
     ax.grid()
     wt.artists.corner_text('c', ax=ax, fontsize=18, background_alpha=1)
     plt.setp(ax.get_yticklabels(), visible=False)
-    ax.set_xlabel(frequency_label('out'), fontsize=18)
-    # measured 2D frequency with homo lineshape -------------------------------
+    ax.set_xlabel(r'$\mathsf{(\omega_{out}-\omega_{1})/\Delta_{\omega}}$', fontsize=18)
+    adjust_spines(ax, 'g')
+    # 2D delay ----------------------------------------------------------------
     ax = plt.subplot(gs[1, 0])
-    p = os.path.join(directory, 'measured', 'dpr 1.0 TO all w1 w2 d1 d2.hdf5')
-    d = wt.kit.read_h5(p)    
-    xi = normalize_frequency(d['w1'])
-    yi = normalize_frequency(d['w2'])
-    zi = np.sqrt(d['arr'][:, :, -6, -1]).T
+    p = os.path.join(directory, 'measured', 'smear 0.0', 'dpr 1.0 TO all w1 w2 d1 d2.hdf5')
+    d = wt.kit.read_h5(p)
+    xi = normalize_delay(-d['d1'])
+    yi = normalize_delay(-d['d2'])
+    zi = np.sqrt(d['arr'][20, 20, :, :]).T
     zi /= zi.max()
     levels= np.linspace(0, 1, 200)
     xi, yi, zi = zoom_arrs(xi, yi, zi)
-    mappable = ax.contourf(xi, yi, zi, cmap=cmap, levels=levels)
+    ax.contourf(xi, yi, zi, cmap=cmap, levels=levels)
     ax.contour(xi, yi, zi, levels=contour_levels, colors='k', alpha=0.5)
     ax.grid()
-    ax.set_xlim(-2, 2)
-    ax.set_ylim(-2, 2)
-    ax.set_xticks(freq_ticks)
-    ax.set_yticks(freq_ticks)
-    wt.artists.diagonal_line(xi, yi)
+    ax.axhline(0, c='k', lw=2)
+    ax.axvline(0, c='k', lw=2)
+    ticks = [-2, 0, 2]
+    ax.set_xticks(ticks)
+    ax.set_yticks(ticks)
+    ax.set_xlabel(delay_label(1), fontsize=18)
+    ax.set_ylabel(delay_label(2), fontsize=18)
+    wt.artists.diagonal_line(xi, yi, ls='-', lw=2)
+    adjust_spines(ax, 'g')
     wt.artists.corner_text('d', ax=ax, fontsize=18, background_alpha=1)
-    ax.set_xlabel(frequency_label('1'), fontsize=18)
-    ax.set_ylabel(frequency_label('2'), fontsize=18)
-    # representation of kernal ------------------------------------------------
-    ax = plt.subplot(gs[1, 1], projection='3d')
-    ax.view_init(35, 75 )
-    plt.setp(ax.get_xticklabels(), visible=False)
-    plt.setp(ax.get_yticklabels(), visible=False)
-    plt.setp(ax.get_zticklabels(), visible=False)
-    xi = np.linspace(-2, 2, 1000)
-    yi = xi
-    function = wt.fit.Gaussian()
-    zi = function.evaluate([0, 1/3., 1, 0], xi)
-    verts = [list(zip(xi, yi, zi))]
-    poly = Poly3DCollection(verts, facecolors=[[0., 0., 0., 0.1]])
-    ax.add_collection3d(poly)
-    ax.set_xlabel(r'$\mathsf{\omega_1}$', fontsize=18)
-    ax.set_xlim3d(-2, 2)
-    ax.yaxis.set_rotate_label(False)  # disable automatic rotation
-    ax.set_ylabel(r'$\mathsf{\omega_2}$', fontsize=18, rotation=115)
-    ax.set_ylim3d(-2, 2)
-    ax.set_zlim3d(0, 1)
-    wt.artists.corner_text('e', ax=ax, fontsize=18, background_alpha=1)
-    # inhomogenious -----------------------------------------------------------
-    ax = plt.subplot(gs[1, 2])
-    p = os.path.join(directory, 'measured with inhomogeneity', 'smear 2.0', 
-                     'dpr 1.0 TO all w1 w2 d1 d2.hdf5')
-    d = wt.kit.read_h5(p)    
+    factor = 4
+    ax.text(-0.5*factor, 0.5*factor, 'I', fontsize = 35, verticalalignment = 'center', horizontalalignment = 'center', path_effects=[PathEffects.withStroke(linewidth=3, foreground="w")])
+    ax.text(0.25*factor, 0.6*factor, 'II', fontsize = 35, verticalalignment = 'center', horizontalalignment = 'center', path_effects=[PathEffects.withStroke(linewidth=3, foreground="w")])
+    ax.text(-0.6*factor, -0.25*factor, 'III', fontsize = 35, verticalalignment = 'center', horizontalalignment = 'center', path_effects=[PathEffects.withStroke(linewidth=3, foreground="w")])
+    ax.text(0.6*factor, 0.25*factor, 'IV', fontsize = 35, verticalalignment = 'center', horizontalalignment = 'center', path_effects=[PathEffects.withStroke(linewidth=3, foreground="w")])
+    ax.text(-0.25*factor, -0.6*factor, 'V', fontsize = 35, verticalalignment = 'center', horizontalalignment = 'center', path_effects=[PathEffects.withStroke(linewidth=3, foreground="w")])
+    ax.text(0.5*factor, -0.5*factor, 'VI', fontsize = 35, verticalalignment = 'center', horizontalalignment = 'center', path_effects=[PathEffects.withStroke(linewidth=3, foreground="w")])
+    # wigner ------------------------------------------------------------------
+    ax = plt.subplot(gs[1, 4])
+    p = os.path.join(directory, 'measured', 'smear 0.0', 'dpr 1.0 TO all w1 w2 d1 d2.hdf5')
+    d = wt.kit.read_h5(p)
     xi = normalize_frequency(d['w1'])
-    yi = normalize_frequency(d['w2'])
-    zi = np.sqrt(d['arr'][:, :, -6, -1]).T
+    yi = normalize_delay(-d['d2'])
+    zi = np.sqrt(d['arr'][:, 20, 10, :]).T
     zi /= zi.max()
     levels= np.linspace(0, 1, 200)
     xi, yi, zi = zoom_arrs(xi, yi, zi)
-    mappable = ax.contourf(xi, yi, zi, cmap=cmap, levels=levels)
+    ax.contourf(xi, yi, zi, cmap=cmap, levels=levels)
+    ax.contour(xi, yi, zi, levels=contour_levels, colors='k', alpha=0.5)
+    ax.grid()
+    ax.axhline(0, c='k', lw=2)
+    ax.axvline(0, lw=4, alpha=0.25, c='k')
+    ax.set_xlim([-2, 2])
+    ax.set_xticks([-1, 0, 1])
+    ax.set_yticks([-2, 0, 2])
+    ax.set_xlabel(frequency_label('1'), fontsize=18)
+    ax.set_ylabel(delay_label(2), fontsize=18)
+    adjust_spines(ax, 'g')
+    wt.artists.corner_text('e', ax=ax, fontsize=18, background_alpha=1)
+    # 2D frequency ------------------------------------------------------------
+    ax = plt.subplot(gs[1, 8])
+    p = os.path.join(directory, 'measured', 'smear 0.0', 'dpr 1.0 TO all w1 w2 d1 d2.hdf5')
+    d = wt.kit.read_h5(p)    
+    xi = normalize_frequency(d['w1'])
+    yi = normalize_frequency(d['w2'])
+    zi = np.sqrt(d['arr'][:, :, 10, 10]).T
+    zi /= zi.max()
+    levels= np.linspace(0, 1, 200)
+    xi, yi, zi = zoom_arrs(xi, yi, zi)
+    ax.contourf(xi, yi, zi, cmap=cmap, levels=levels)
     ax.contour(xi, yi, zi, levels=contour_levels, colors='k', alpha=0.5)
     ax.grid()
     ax.set_xlim(-2, 2)
@@ -442,23 +465,15 @@ if not os.path.isfile(output_path) or force_plotting:
     ax.set_yticks(freq_ticks)
     wt.artists.diagonal_line(xi, yi)
     wt.artists.corner_text('f', ax=ax, fontsize=18, background_alpha=1)
-    # show inhomo linewidth applied
-    # TODO: ensure that this matches the actual linewidth (FWHM) used...
-    center = 7000.
-    width = 2*delta_omega
-    l = np.linspace(center-(width/2), center+(width/2), 100)
-    l = normalize_frequency(l)
-    ax.plot(l, l, c='k', lw=5)
     ax.set_xlabel(frequency_label('1'), fontsize=18)
     ax.set_ylabel(frequency_label('2'), fontsize=18)
-    # colorbar ----------------------------------------------------------------
-    ticks = np.linspace(0, 1, 11)
+    adjust_spines(ax, 'g')
+    # finish ------------------------------------------------------------------
+    # colorbar    
     cax = plt.subplot(gs[1, -1])
-    matplotlib.colorbar.ColorbarBase(cax, cmap=cmap, ticks=ticks)
-    cax.set_ylabel('amplitude', fontsize=18)
+    cbar = wt.artists.plot_colorbar(cax=cax, label='amplitude')
     # finish
-    plt.savefig(output_path, dpi=300, transparent=True, pad_inches=1)
-    plt.close('fig')
+    wt.artists.savefig(output_path)
         
 
 ### fid vs dpr ################################################################
@@ -506,19 +521,24 @@ if not os.path.isfile(output_path) or force_plotting:
     # 0
     ax = plt.subplot(gs[0, 0])
     add_data(ax, 0, label='$\infty$')
+    adjust_spines(ax, 'grey')
     # 1
     ax = plt.subplot(gs[1, 0])
     add_data(ax, 1, label='2.0')
+    adjust_spines(ax, 'b')
     # 2
     ax = plt.subplot(gs[2, 0])
     add_data(ax, 2, label='1.0')
     ax.set_ylabel('amplitude', fontsize=18, labelpad=20)
+    adjust_spines(ax, 'g')
     # 3
     ax = plt.subplot(gs[3, 0])
     add_data(ax, 3, label='0.5')
+    adjust_spines(ax, 'r')
     # 4
     ax = plt.subplot(gs[4, 0])
     add_data(ax, 4, label='0.0', show_x=True)
+    adjust_spines(ax, 'grey')
     # colorbar    
     cax = plt.subplot(gs[:, 1])
     label = r'$\mathsf{((d\phi / dt)-\omega_{10})/\Delta_{\omega}}$'
@@ -571,6 +591,7 @@ if not os.path.isfile(output_path) or force_plotting:
        plt.setp(ax.get_yticklabels(), visible=False)
        wt.artists.corner_text(label, fontsize=18, background_alpha=1.)
        ax.grid()
+       adjust_spines(ax, 'g')
     # fill out axes
     # 0
     ax = plt.subplot(gs[0, 0])
@@ -599,7 +620,6 @@ if not os.path.isfile(output_path) or force_plotting:
 
 
 ### pathway 1 lineshapes ######################################################
-# TODO: consider adding diagrams showing pulse envelopes as in simulation overview
 
 
 output_path = os.path.join(directory, 'pw1 lineshapes.png')
@@ -612,7 +632,7 @@ if not os.path.isfile(output_path) or force_plotting:
                                        cols=[1, 1, 0.25, 1, 1, 'cbar'])
     # data
     title = None        
-    filepath = os.path.join(directory, 'measured', 'dpr 1.0 TO all w1 w2 d1 d2.hdf5')
+    filepath = os.path.join(directory, 'measured', 'smear 0.0', 'dpr 1.0 TO 1 w1 w2 d1 d2.hdf5')
     d = wt.kit.read_h5(filepath)
     arr = np.sqrt(d['arr'])
     # 2D delay
@@ -640,19 +660,26 @@ if not os.path.isfile(output_path) or force_plotting:
     ax.set_xlim(xi.min(), xi.max())
     ax.set_ylim(yi.min(), yi.max())
     ax.set_title('$\mathsf{\omega_1 = \omega_2 = \omega_{10}}$')
+    adjust_spines(ax, 'g')
     # preapre for frequency plots
     xi = normalize_frequency(d['w1'])
     yi = normalize_frequency(d['w2'])
     xi = scipy.ndimage.interpolation.zoom(xi, 5)
     yi = scipy.ndimage.interpolation.zoom(yi, 5)
-    def adjust_spines(ax, color):
-        for key in ['bottom', 'top', 'right', 'left']:
-            ax.spines[key].set_color(color)
-            ax.spines[key].set_linewidth(5)
     freq_ticks = [-2, 0, 2]
+    def add_axs(r, c, bg_c='g'):
+        ax = plt.subplot(gs[r, c], frameon=False)
+        for key in ['bottom', 'top', 'right', 'left']:
+            ax.spines[key].set_color(bg_c)
+            ax.spines[key].set_linewidth(6)
+            ax.spines[key].zorder = 1000
+        plt.setp(ax.get_xticklabels(), visible=False)
+        plt.setp(ax.get_yticklabels(), visible=False)
+        newax = fig.add_axes(ax.get_position(), frameon=True)
+        return newax
     # UL
-    ax = plt.subplot(gs[0, 3])
-    adjust_spines(ax, 'cyan')
+    ax = add_axs(0, 3)
+    adjust_spines(ax, 'cyan', lw=3)
     zi = arr[:, :, 15, 5].T
     zi /= zi.max()
     zi = scipy.ndimage.interpolation.zoom(zi, 5)
@@ -668,8 +695,8 @@ if not os.path.isfile(output_path) or force_plotting:
     ax.set_ylabel(frequency_label('2'))
     plt.setp(ax.get_xticklabels(), visible=False)
     # UR
-    ax = plt.subplot(gs[0, 4])
-    adjust_spines(ax, 'm')
+    ax = add_axs(0, 4)
+    adjust_spines(ax, 'm', lw=3)
     zi = arr[:, :, 10, 5].T
     zi /= zi.max()
     zi = scipy.ndimage.interpolation.zoom(zi, 5)
@@ -684,8 +711,8 @@ if not os.path.isfile(output_path) or force_plotting:
     plt.setp(ax.get_xticklabels(), visible=False)
     plt.setp(ax.get_yticklabels(), visible=False)
     # LL
-    ax = plt.subplot(gs[1, 3])
-    adjust_spines(ax, 'pink')
+    ax = add_axs(1, 3)
+    adjust_spines(ax, 'pink', lw=3)
     zi = arr[:, :, 15, 10].T
     zi /= zi.max()
     zi = scipy.ndimage.interpolation.zoom(zi, 5)
@@ -701,8 +728,8 @@ if not os.path.isfile(output_path) or force_plotting:
     ax.set_ylabel(frequency_label('2'))
     ax.set_xlabel(frequency_label('1'))
     # LR
-    ax = plt.subplot(gs[1, 4])
-    adjust_spines(ax, 'orange')
+    ax = add_axs(1, 4)
+    adjust_spines(ax, 'orange', lw=3)
     zi = arr[:, :, 10, 10].T
     zi /= zi.max()
     zi = scipy.ndimage.interpolation.zoom(zi, 5)
@@ -743,16 +770,16 @@ if not os.path.isfile(output_path) or force_plotting:
                                        cols=[1, 1, 1, 'cbar'], aspects=aspects,
                                        hspace=0.1)
     # subplot method
-    def plot(gs_col, dpr, manuals, yticks, title=''):
+    def plot(gs_col, dpr, manuals, yticks, title='', c='grey'):
         sps = gs[1, gs_col]
         ax = plt.subplot(sps)
         if not yticks:
             plt.setp(ax.get_yticklabels(), visible=False)
         else:
-            ax.set_ylabel(r'$\mathsf{\tau_{21}/w_t}$', fontsize=18)
+            ax.set_ylabel(delay_label(2), fontsize=18)
         cmap = wt.artists.colormaps['default']
         # get data from zip
-        template_fname = os.path.join('measured', 'dpr {0} TO {1} w1 w2 d1 d2.hdf5')
+        template_fname = os.path.join('measured', 'smear 0.0', 'dpr {0} TO {1} w1 w2 d1 d2.hdf5')
         filepath = template_fname.format(dpr, 'all')
         npz = wt.kit.read_h5(filepath)
         d1 = -npz['d1']/50.
@@ -794,7 +821,8 @@ if not os.path.isfile(output_path) or force_plotting:
         plot_contours(6, manuals[3])
         ax.set_xticks(delay_ticks)
         ax.set_yticks(delay_ticks)
-        ax.set_xlabel(r'$\mathsf{\tau_{22^{\prime}}/w_t}$', fontsize=18)
+        ax.set_xlabel(delay_label(1), fontsize=18)
+        adjust_spines(ax, c)
         # plot slice
         ax = plt.subplot(gs[0, gs_col])
         ax.axvline(0, c='k', ls='-', lw=2, zorder=50)
@@ -809,17 +837,18 @@ if not os.path.isfile(output_path) or force_plotting:
         else:
             ax.set_ylabel('amp.', fontsize=18)
         ax.grid()
-        def plot_slice(TO, c=c):
+        def plot_slice(TO, c):
             filepath = template_fname.format(dpr, TO)
             npz = wt.kit.read_h5(filepath)
             arr = np.sqrt(npz['arr'][20, 20].T)
             arr /= amps_max
             ax.plot(xi, arr[10], lw=2, c=c)
-        plot_slice(5, 'r')
-        plot_slice(6, 'b')
-        plot_slice(1, 'g')
-        plot_slice(3, 'g')
+        plot_slice(5, 'm')
+        plot_slice(6, 'orange')
+        plot_slice(1, 'c')
+        plot_slice(3, 'c')
         ax.set_title(title, fontsize=18, y=1.08)
+        adjust_spines(ax, c)
     manuals = [None, None, None, None]
     manuals[0] = [[(-0.31, 0), (-1, 1), (-1.2, 1.5), (-2, 3)],
                   [(-0.2, -0.7), (-2.5, -1.3), (-3, -1.9), (-4, -2.5)],
@@ -834,9 +863,9 @@ if not os.path.isfile(output_path) or force_plotting:
                   [(-0.7, -0.02), (-1, -2), (-1.5, -3), (-2.05, -4)],
                   [(0, -0.31), (1, -1), (1.5, -1.2), (3, -2)]]    
     dprs = ['0.5', '1.0', '2.0']
-    plot(0, dprs[0], manuals=manuals[0], yticks=True, title=r'$\mathsf{\Gamma_{10}\Delta_t = 2.0}$')
-    plot(1, dprs[1], manuals=manuals[1], yticks=False, title=r'$\mathsf{\Gamma_{10}\Delta_t = 1.0}$')
-    plot(2, dprs[2], manuals=manuals[2], yticks=False, title=r'$\mathsf{\Gamma_{10}\Delta_t = 0.5}$')
+    ax = plot(0, dprs[0], manuals=manuals[0], yticks=True, title=r'$\mathsf{\Gamma_{10}\Delta_t = 2.0}$', c='b')
+    ax = plot(1, dprs[1], manuals=manuals[1], yticks=False, title=r'$\mathsf{\Gamma_{10}\Delta_t = 1.0}$', c='g')
+    ax = plot(2, dprs[2], manuals=manuals[2], yticks=False, title=r'$\mathsf{\Gamma_{10}\Delta_t = 0.5}$', c='r')
     # colorbar
     ticks = np.linspace(0, 1, 11)
     cax = plt.subplot(gs[:, -1])
@@ -845,6 +874,92 @@ if not os.path.isfile(output_path) or force_plotting:
     # finish
     plt.savefig(output_path, dpi=300, transparent=True, pad_inches=1)
     plt.close('fig')
+
+
+### spectral evolution ########################################################
+
+
+output_path = os.path.join(directory, 'spectral evolution.png')
+
+force_plotting = False
+
+if not os.path.isfile(output_path) or force_plotting:
+    # prepare figure
+    aspects = [[[1, 0], 0.3]]
+    fig, gs = wt.artists.create_figure(width='double', aspects=aspects,
+                                       cols=[1, 1, 1, 1, 1], nrows=2,
+                                       hspace=0.1)
+    # plot method
+    p_template = os.path.join(directory, 'measured', 'smear 0.0', 'dpr {} TO {} w1 w2 d1 d2.hdf5')
+    def plot(col, d2_index, d2_text):
+        ax = plt.subplot(gs[0, col])
+        dprs = ['2.0', '1.0', '0.5']
+        cs = {'0.5': 'b',
+              '1.0': 'g',
+              '2.0': 'r'}
+        maxima = {}
+        # 2D freq
+        for dpr in dprs:
+            p = p_template.format(dpr, 'all')
+            d = wt.kit.read_h5(p)
+            xi = normalize_frequency(d['w1'])
+            yi = normalize_frequency(d['w2'])
+            zi = np.sqrt(d['arr'][:, :, 10, d2_index].T)
+            maxima[dpr] = zi.max()
+            zi /= zi.max()
+            xi, yi, zi = zoom_arrs(xi, yi, zi)
+            levels = [0, 0.5, 1]
+            ax.contour(xi, yi, zi, levels=levels, colors=cs[dpr],
+                       linewidths=2, alpha=0.8)
+            CS = plt.contourf(xi, yi, zi, levels=levels, colors='k', alpha=0.0)
+            zc = CS.collections[1]
+            plt.setp(zc, alpha=0.1)
+        ax.set_xlim(-2, 2)
+        ax.set_ylim(-2, 2)
+        ticks = [-1, 0, 1]
+        ax.set_xticks(ticks)
+        ax.set_yticks(ticks)
+        ax.xaxis.tick_top()
+        ax.xaxis.set_label_position('top') 
+        ax.set_xlabel(frequency_label('1'), fontsize=18)
+        if col == 0:
+            ax.set_ylabel(frequency_label('2'), fontsize=18)
+        else:
+            plt.setp(ax.get_yticklabels(), visible=False)
+        ax.grid()
+        label = r'$\mathsf{\tau_{21}=' + d2_text + r'\Delta_t}$'
+        wt.artists.corner_text(label, fontsize=18, background_alpha=1)
+        wt.artists.diagonal_line(xi, yi)
+        # histogram
+        ax = plt.subplot(gs[1, col])
+        TOs = ['1', '3', '5']
+        for i, TO in enumerate(TOs):
+            for j, dpr in enumerate(dprs):
+                p = p_template.format(dpr, TO)
+                d = wt.kit.read_h5(p)
+                fraction = np.sqrt(d['arr'][20, 20, 10, d2_index])
+                fraction /= maxima[dpr]
+                position = i - (j-1)/4 - 1/8
+                if TO == '5':
+                    fraction *= 2
+                plt.bar(position, fraction, color=cs[dpr], width=0.25)
+        ax.set_ylim(0, 1.1)
+        ax.set_yticks([0, 0.5, 1])
+        if col == 0:
+            ax.set_ylabel('amp.', fontsize=18)
+        else:
+            plt.setp(ax.get_yticklabels(), visible=False)
+        ax.grid()
+        ax.set_xticks([0, 1, 2])
+        ax.set_xticklabels(['I', 'III', 'V,VI'], fontsize=18)
+    # fill out plot
+    plot(0, d2_index=5, d2_text=r'2.0')
+    plot(1, d2_index=9, d2_text=r'0.4')
+    plot(2, d2_index=10, d2_text=r'0.0')
+    plot(3, d2_index=11, d2_text=r'-0.4')
+    plot(4, d2_index=15, d2_text=r'-2.0')
+    # finish
+    wt.artists.savefig(output_path, fig=fig, close=True)    
 
 
 ### wigners ###################################################################
@@ -881,13 +996,14 @@ if not os.path.isfile(output_path) or force_plotting:
         ax.set_xticks([-2, 0, 2])
         ax.set_xlim(-3, 3)
         ax.set_yticks(delay_ticks)
+        adjust_spines(ax, 'g')
     fig, gs = wt.artists.create_figure(nrows=1, cols=[1, 1, 1, 1, 1, 'cbar'], width='double')
-    p = os.path.join('measured', 'dpr 1.0 TO all w1 w2 d1 d2.hdf5')
+    p = os.path.join('measured', 'smear 0.0', 'dpr 1.0 TO all w1 w2 d1 d2.hdf5')
     # red
     ax = plt.subplot(gs[0, 0])
     plot(ax, p, 'rr')
     ax.set_xlabel(frequency_label(1), fontsize=18)
-    ax.set_ylabel(time_label(), fontsize=18)
+    ax.set_ylabel(delay_label(2), fontsize=18)
     # red
     ax = plt.subplot(gs[0, 1])
     plot(ax, p, 'r')
@@ -917,145 +1033,1004 @@ if not os.path.isfile(output_path) or force_plotting:
     plt.close(fig)
 
 
-### test ######################################################################
+### inhom delay space ratios ##################################################
 
 
-output_path = os.path.join(directory, 'test.png')
+output_path = os.path.join(directory, 'inhom delay space ratios.png')
 
 force_plotting = False
 
-if not os.path.isfile(output_path) or force_plotting:    
-    # create figure
-    cols = ['cbar', 0.5, 1, 0.5, 1, 'cbar']
-    aspects = [[[0, 1], 0.3],
-               [[1, 1], 1.0],
-               [[2, 1], 0.25],
-               [[3, 1], 0.3],
-               [[4, 1], 1.0]]
-    fig, gs = wt.artists.create_figure(cols=cols, nrows=5, width='double',
-                                       aspects=aspects, hspace=0.5)
-    # time traces -------------------------------------------------------------
-    def plot(ax, d1, d2):
-        # TODO: precalculate the things we need here...
-        import NISE
-        from NISE.lib import pulse
-        from NISE.lib.misc.__init__ import NISE_path
-        import numpy as np
-        # important:  we can't call on scan directly for some reason; use trive to do it
-        import NISE.lib.measure as m
-        import NISE.experiments.trive as trive
-        import NISE.hamiltonians.H0 as H0
-        import NISE.hamiltonians.params.inhom as inhom
-        trive.exp.set_coord(trive.d2, -d2)
-        trive.exp.set_coord(trive.ws, 7000.)  # TODO: change
-        trive.exp.set_coord(trive.ss, 50.)
-        trive.exp.timestep = 0.1
-        trive.exp.early_buffer = 500
-        trive.exp.late_buffer = 500
-        # hamiltonian
-        H0.tau_ag = 50.
-        H0.tau_2aa = 50.
-        H0.tau_2ag = 50.
-        H = H0.Omega()
-        H.out_group = [[i] for i in range(7)]
-        H.TOs = [1]  # other pathways complicate interpretation...
-        # scan
-        axis_d1 = trive.d1  # I seem to need an axis argument...
-        axis_d1.points = np.array([-d1])  # this is where you set D1, really
-        scan = trive.exp.scan(trive.d1, H=H)
-        scan.run(mp=False, autosave=False)
-        # plot pulses
-        arr = scan.efields(windowed=True)
-        xi = np.linspace(-scan.early_buffer, scan.late_buffer, arr.shape[-1])
-        xi /= 50.
-        # -2
-        yi = np.abs(arr[0, 1, :])**2
-        yi /= yi.max()
-        ax.fill_between(xi, 0, yi, facecolor='b', alpha=0.25)
-        # 2'
-        yi = np.abs(arr[0, 2, :])**2
-        yi /= yi.max()
-        ax.fill_between(xi, 0, yi, facecolor='b', alpha=0.25)
-        # 1
-        yi = np.abs(arr[0, 0, :])**2
-        yi /= yi.max()
-        ax.fill_between(xi, 0, yi, facecolor='r', alpha=0.25)
-        # plot density matrix terms
-        # ag
-        yi = np.abs(scan.sig[0, 1, :])**2
-        yi /= yi.max()
-        ax.plot(xi, yi, lw=2, c='g', label=r'$\mathsf{\rho_{ga}}$')
-        # gg1 (actually aa)
-        yi = np.abs(scan.sig[0, 3, :])**2
-        yi /= yi.max()
-        ax.plot(xi, yi, lw=2, c='m', label=r'$\mathsf{\rho_{aa}}$')
-        # ag2
-        yi = np.abs(scan.sig[0, 5, :])**2
-        yi /= yi.max()
-        ax.plot(xi, yi, lw=2, c='c', label=r'$\mathsf{\rho_{ag2}}$')
-        ax.set_ylim(0, 1.15)
-        ax.set_xlim(-7, 7)
-        plt.grid()
-        ax.set_xlabel(time_label(), fontsize=18)
-        plt.setp(ax.get_yticklabels(), visible=False)
-    # UL
-    ax = plt.subplot(gs[0, 2])
-    scan = plot(ax, -100, 100)
-    # UR
-    ax = plt.subplot(gs[0, 4])
-    # LL
-    ax = plt.subplot(gs[3, 2])
-    # LR
-    ax = plt.subplot(gs[3, 4])
-    # 2D frequencies ----------------------------------------------------------
-    filepath = os.path.join(directory, 'measured', 'dpr 1.0 TO all w1 w2 d1 d2.hdf5')
-    d = wt.kit.read_h5(filepath)
-    arr = np.sqrt(d['arr'])
-    def plot(ax, zi):
-        xi = normalize_frequency(d['w1'].copy())
-        yi = normalize_frequency(d['w2'].copy())
-        zi /= zi.max()
-        xi, yi, zi = zoom_arrs(xi, yi, zi)
+if not os.path.isfile(output_path) or force_plotting:
+    # prepare figure
+    aspects = [[[0, 0], 0.25]]
+    fig, gs = wt.artists.create_figure(width='single', nrows=2, 
+                                       cols=[1, 'cbar'], aspects=aspects,
+                                       hspace=0.1)
+    # subplot method
+    def plot(gs_col, dpr, manuals, yticks):
+        sps = gs[1, gs_col]
+        ax = plt.subplot(sps)
+        if not yticks:
+            plt.setp(ax.get_yticklabels(), visible=False)
+        else:
+            ax.set_ylabel(delay_label(2), fontsize=18)
+        cmap = wt.artists.colormaps['default']
+        # get data from zip
+        template_fname = os.path.join('measured', 'smear 1.0', 'dpr {0} TO {1} w1 w2 d1 d2.hdf5')
+        filepath = template_fname.format(dpr, 'all')
+        d = wt.kit.read_h5(filepath)
+        d1 = -d['d1']/50.
+        d2 = -d['d2']/50.
+        arr = np.sqrt(d['arr'][20, 20].T)
+        TO_all = arr.copy()
+        amps_max = arr.max()
+        arr /= arr.max()
+        amps = arr.copy()
+        # plot amplitude
         levels = np.linspace(0, 1, 200)
-        ax.contourf(xi, yi, zi, cmap=cmap, levels=levels)
-        contour_levels = [0.25, 0.5, 0.75]
-        ax.contour(xi, yi, zi, contour_levels, colors='k', alpha=0.5)
-        ax.set_xlim(-4, 4)
-        ax.set_ylim(-4, 4)
-        ticks = [-2, 0, 2]
+        ax.contourf(d1, d2, arr, levels=levels, cmap=cmap)
+        ax.set_xlim(d1.min(), d1.max())
+        ax.set_ylim(d2.min(), d2.max())    
+        ax.grid()
+        ax.axhline(0, c='k', ls='-', lw=2)
+        ax.axvline(0, c='k', ls='-', lw=2)
+        wt.artists.diagonal_line(d1, d2, ax=ax, c='k', ls='-', lw=2)
+        def plot_contours(TO, manual):
+            filepath = template_fname.format(dpr, TO)
+            npz = wt.kit.read_h5(filepath)
+            d1 = -npz['d1']/50.
+            d2 = -npz['d2']/50.
+            arr = np.sqrt(npz['arr'][20, 20].T)
+            arr /= TO_all
+            arr /= arr.max()
+            # generate levels
+            levels = [0.5, 0.75]
+            current = 0.75
+            for _ in range(10):
+                current = current+((1-current)/1.5)
+                levels.append(current)
+            levels = [0.5, 0.75, 0.9, 0.99]
+            CS = ax.contour(d1, d2, arr, colors='k', levels=levels, alpha=0.5)
+            plt.clabel(CS, inline=True, fontsize=12, fmt='%.2f', manual=manual, c='k')
+        plot_contours(1, manuals[0])
+        plot_contours(3, manuals[1])
+        plot_contours(5, manuals[2])
+        plot_contours(6, manuals[3])
+        ax.set_xticks(delay_ticks)
+        ax.set_yticks(delay_ticks)
+        ax.set_xlabel(delay_label(1), fontsize=18)
+        adjust_spines(ax, 'g')
+        # plot slice
+        ax = plt.subplot(gs[0, gs_col])
+        ax.axvline(0, c='k', ls='-', lw=2, zorder=50)
+        xi = d1
+        yi = amps[10]
+        ax.plot(xi, yi, c='grey', lw=5)
+        ax.set_yticks([0, 0.5, 1.])
+        ax.set_ylim(0, 1.1)
+        plt.setp(ax.get_xticklabels(), visible=False)
+        if not yticks:
+            plt.setp(ax.get_yticklabels(), visible=False)
+        else:
+            ax.set_ylabel('amp.', fontsize=18)
+        ax.grid()
+        def plot_slice(TO, c, ls='-'):
+            filepath = template_fname.format(dpr, TO)
+            npz = wt.kit.read_h5(filepath)
+            arr = np.sqrt(npz['arr'][20, 20].T)
+            arr /= amps_max
+            ax.plot(xi, arr[10], lw=2, c=c, ls=ls)
+        plot_slice(5, 'm')
+        plot_slice(6, 'orange')
+        plot_slice(1, 'c')
+        plot_slice(3, 'c', ls='--')
+        adjust_spines(ax, 'g')
+    manual = [[(-0.31, 0), (-1, 1), (-1.2, 2.1), (-2, 3)],
+              [(-0.2, -0.7), (-2, -1), (-3, -1.5), (-4, -2.05)],
+              [(-0.7, -0.02), (-1, -2), (-1.5, -3), (-2.05, -4)],
+              [(0, -0.31), (1, -1), (2.1, -1.2), (3, -2)]]    
+    plot(0, '1.0', manuals=manual, yticks=True)
+    # colorbar
+    ticks = np.linspace(0, 1, 11)
+    cax = plt.subplot(gs[:, -1])
+    matplotlib.colorbar.ColorbarBase(cax, cmap=cmap, ticks=ticks)
+    cax.set_ylabel('amplitude', fontsize=18)
+    # finish
+    plt.savefig(output_path, dpi=300, transparent=True, pad_inches=1)
+    plt.close('fig')
+
+
+### inhom spectral evolution ##################################################
+
+
+output_path = os.path.join(directory, 'inhom spectral evolution.png')
+
+force_plotting = False
+
+if not os.path.isfile(output_path) or force_plotting:
+    # prepare figure
+    aspects = [[[1, 0], 0.3]]
+    fig, gs = wt.artists.create_figure(width='double', aspects=aspects,
+                                       cols=[1, 1, 1, 1, 1], nrows=2,
+                                       hspace=0.1)
+    # plot method
+    p_template = os.path.join(directory, 'measured', 'smear {}', 'dpr {} TO {} w1 w2 d1 d2.hdf5')
+    def plot(col, d2_index, d2_text):
+        ax = plt.subplot(gs[0, col])
+        dprs = ['2.0', '1.0', '0.5']
+        cs = {'0.5': 'b',
+              '1.0': 'g',
+              '2.0': 'r'}
+        smear = {'0.5': '2.0',
+                 '1.0': '1.0',
+                 '2.0': '0.5'}
+        maxima = {}
+        # 2D freq
+        for dpr in dprs:
+            p = p_template.format(smear[dpr], dpr, 'all')  # smear = dpr
+            d = wt.kit.read_h5(p)
+            xi = normalize_frequency(d['w1'])
+            yi = normalize_frequency(d['w2'])
+            zi = np.sqrt(d['arr'][:, :, 10, d2_index].T)
+            maxima[dpr] = zi.max()
+            zi /= zi.max()
+            xi, yi, zi = zoom_arrs(xi, yi, zi)
+            levels = [0, 0.5, 1]
+            ax.contour(xi, yi, zi, levels=levels, colors=cs[dpr],
+                       linewidths=2, alpha=0.8)
+            CS = plt.contourf(xi, yi, zi, levels=levels, colors='k', alpha=0.0)
+            zc = CS.collections[1]
+            plt.setp(zc, alpha=0.1)
+        ax.set_xlim(-2, 2)
+        ax.set_ylim(-2, 2)
+        ticks = [-1, 0, 1]
         ax.set_xticks(ticks)
         ax.set_yticks(ticks)
+        ax.xaxis.tick_top()
+        ax.xaxis.set_label_position('top') 
+        ax.set_xlabel(frequency_label('1'), fontsize=18)
+        if col == 0:
+            ax.set_ylabel(frequency_label('2'), fontsize=18)
+        else:
+            plt.setp(ax.get_yticklabels(), visible=False)
+        ax.grid()
+        label = r'$\mathsf{\tau_{21}=' + d2_text + r'\Delta_t}$'
+        wt.artists.corner_text(label, fontsize=18, background_alpha=1)
+        wt.artists.diagonal_line(xi, yi)
+        # histogram
+        ax = plt.subplot(gs[1, col])
+        TOs = ['1', '3', '5', '6']
+        for i, TO in enumerate(TOs):
+            for j, dpr in enumerate(dprs):
+                p = p_template.format(smear[dpr], dpr, TO)
+                d = wt.kit.read_h5(p)
+                fraction = np.sqrt(d['arr'][20, 20, 10, d2_index])
+                fraction /= maxima[dpr]
+                position = i - (j-1)/4 - 1/8
+                plt.bar(position, fraction, color=cs[dpr], width=0.25)
+        ax.set_ylim(0, 1.1)
+        ax.set_yticks([0, 0.5, 1])
+        if col == 0:
+            ax.set_ylabel('amp.', fontsize=18)
+        else:
+            plt.setp(ax.get_yticklabels(), visible=False)
+        ax.grid()
+        ax.set_xticks([0, 1, 2, 3])
+        ax.set_xticklabels(['I', 'III', 'V', 'VI'], fontsize=18)
+    # fill out plot
+    plot(0, d2_index=5, d2_text=r'2.0')
+    plot(1, d2_index=9, d2_text=r'0.4')
+    plot(2, d2_index=10, d2_text=r'0.0')
+    plot(3, d2_index=11, d2_text=r'-0.4')
+    plot(4, d2_index=15, d2_text=r'-2.0')
+    # finish
+    wt.artists.savefig(output_path, fig=fig, close=True)
+
+
+### metrics of correlation ####################################################
+
+
+# TODO:
+
+
+### driven ####################################################################
+
+
+# TODO:
+
+
+### convolve ##################################################################
+
+
+output_path = os.path.join(directory, 'convolve.png')
+
+force_plotting = True
+
+if not os.path.isfile(output_path) or force_plotting:
+    # create figure -----------------------------------------------------------
+    fig, gs = wt.artists.create_figure(width='double', cols=[1, 1.5, 1, 'cbar'])
+    # measured 2D frequency with homo lineshape -------------------------------
+    ax = plt.subplot(gs[0, 0])
+    p = os.path.join(directory, 'measured', 'smear 0.0', 'dpr 1.0 TO all w1 w2 d1 d2.hdf5')
+    d = wt.kit.read_h5(p)    
+    xi = normalize_frequency(d['w1'])
+    yi = normalize_frequency(d['w2'])
+    zi = np.sqrt(d['arr'][:, :, -6, -1]).T
+    zi /= zi.max()
+    levels= np.linspace(0, 1, 200)
+    xi, yi, zi = zoom_arrs(xi, yi, zi)
+    mappable = ax.contourf(xi, yi, zi, cmap=cmap, levels=levels)
+    ax.contour(xi, yi, zi, levels=contour_levels, colors='k', alpha=0.5)
+    ax.grid()
+    ax.set_xlim(-2, 2)
+    ax.set_ylim(-2, 2)
+    ax.set_xticks(freq_ticks)
+    ax.set_yticks(freq_ticks)
+    wt.artists.diagonal_line(xi, yi)
+    wt.artists.corner_text('a', ax=ax, fontsize=18, background_alpha=1)
+    ax.set_xlabel(frequency_label('1'), fontsize=18)
+    ax.set_ylabel(frequency_label('2'), fontsize=18)
+    adjust_spines(ax, 'g')
+    # representation of kernal ------------------------------------------------
+    ax = plt.subplot(gs[0, 1], projection='3d')
+    ax.view_init(35, 75 )
+    plt.setp(ax.get_zticklabels(), visible=False)
+    # box
+    ax.plot([-2, -2], [-2, 2], [0, 0], c='g')
+    ax.plot([-2, 2], [2, 2], [0, 0], c='g')
+    ax.plot([2, 2], [2, -2], [0, 0], c='g')
+    ax.plot([-2, 2], [-2, -2], [0, 0], c='g')
+    # gaussian
+    xi = np.linspace(3, -3, 1000)
+    yi = xi
+    function = wt.fit.Gaussian()
+    FWHM = 2
+    sigma = FWHM/2.3548
+    zi = function.evaluate([0, sigma, 1, 0], xi)
+    verts = [list(zip(xi, yi, zi))]
+    poly = Poly3DCollection(verts, facecolors=[[0., 0., 0., 0.1]])
+    ax.add_collection3d(poly)
+    ax.set_xlabel(r'$\mathsf{\omega_1}$', fontsize=18)
+    ax.set_xlim3d(xi.min(), xi.max())
+    ax.yaxis.set_rotate_label(False)  # disable automatic rotation
+    ax.set_ylabel(r'$\mathsf{\omega_2}$', fontsize=18, rotation=115)
+    ax.set_ylim3d(xi.min(), xi.max())
+    ax.set_zlim3d(0, 1)
+    wt.artists.corner_text('b', ax=ax, fontsize=18, background_alpha=1)
+    labels = ['', 2, '', 0,  '', -2, '']
+    ax.set_xticklabels(labels)
+    ax.set_yticklabels(labels)
+    # lines
+    ax.plot([1, 1], [1, 1], [0, 0.5], c='k', ls=':')
+    ax.plot([-1, -1], [-1, -1], [0, 0.5], c='k', ls=':')
+    ax.plot([1, -1], [1, -1], [0.5, 0.5], c='k', ls=':')
+    # inhomogenious -----------------------------------------------------------
+    ax = plt.subplot(gs[0, 2])
+    p = os.path.join(directory, 'measured', 'smear 2.0', 'dpr 1.0 TO all w1 w2 d1 d2.hdf5')
+    d = wt.kit.read_h5(p)    
+    xi = normalize_frequency(d['w1'])
+    yi = normalize_frequency(d['w2'])
+    zi = np.sqrt(d['arr'][:, :, -6, -1]).T
+    zi /= zi.max()
+    levels= np.linspace(0, 1, 200)
+    xi, yi, zi = zoom_arrs(xi, yi, zi)
+    mappable = ax.contourf(xi, yi, zi, cmap=cmap, levels=levels)
+    ax.contour(xi, yi, zi, levels=contour_levels, colors='k', alpha=0.5)
+    ax.grid()
+    ax.set_xlim(-2, 2)
+    ax.set_ylim(-2, 2)
+    ax.set_xticks(freq_ticks)
+    ax.set_yticks(freq_ticks)
+    wt.artists.diagonal_line(xi, yi)
+    wt.artists.corner_text('c', ax=ax, fontsize=18, background_alpha=1)
+    # show inhomo linewidth applied
+    # TODO: ensure that this matches the actual linewidth (FWHM) used...
+    center = 7000.
+    width = 2*delta_omega
+    l = np.linspace(center-(width/2), center+(width/2), 100)
+    l = normalize_frequency(l)
+    ax.plot(l, l, c='k', lw=5)
+    ax.set_xlabel(frequency_label('1'), fontsize=18)
+    ax.set_ylabel(frequency_label('2'), fontsize=18)
+    adjust_spines(ax, 'g')
+    # colorbar ----------------------------------------------------------------
+    ticks = np.linspace(0, 1, 11)
+    cax = plt.subplot(gs[:, -1])
+    matplotlib.colorbar.ColorbarBase(cax, cmap=cmap, ticks=ticks)
+    cax.set_ylabel('amplitude', fontsize=18)
+    # finish
+    plt.savefig(output_path, dpi=300, transparent=True, pad_inches=1)
+    plt.close('fig')
+
+
+### 2D delays #################################################################
+
+
+output_path = os.path.join(directory, '2D delays.png')
+
+force_plotting = False
+
+if not os.path.isfile(output_path) or force_plotting:
+    # set up figure
+    fig, gs = wt.artists.create_figure(width=12, nrows=4,
+                                       cols=[1, 1, 1, 0, 'cbar'])
+    # fit method
+    def measure_shifts(xi, yi, zi):
+        '''
+        3PEPS shift defined using sig on the intensity level
+        '''
+        # shape arrays
+        xi = xi.copy()
+        yi = yi.copy()
+        zi = zi.copy()
+        zi_shifted = np.full(zi.shape, np.nan)
+        for i in range(xi.size):
+            if i <= 10:
+                zi_shifted[:, i] = zi[:, i]
+            else:
+                for j in range(yi.size):
+                    try:
+                        zi_shifted[j, i] = zi[j+(i-10), i]
+                    except IndexError:
+                        pass
+        # go by fitting
+        def gauss(p, x):
+            A, mu, w = p
+            z = (mu - x) / (np.sqrt(2) * w)
+            out = A * np.exp(-z**2)
+            return out
+        def erf1(p, x, y):
+            return y - gauss(p,x)
+        shifts = np.full((11, 2), np.nan)
+        for i in range(10, 21):
+            sig = zi_shifted[i]
+            p0 = []
+            p0.append(np.nanmax(sig))  # amplitude
+            p0.append(0.)  # center
+            p0.append(1.)  # width
+            args = wt.kit.remove_nans_1D([xi, sig])
+            params = leastsq(erf1, p0, args=tuple(args), full_output=False)[0]
+            shifts[i-10] = [yi[i], params[1]]
+        for i in range(7, 11):
+            shifts[i, 1] = shifts[7, 1]  # edge is corrupted, esentially
+        return shifts
+    # worker method
+    p_template = os.path.join(directory, 'measured', 'smear {}', 'dpr {} TO all w1 w2 d1 d2.hdf5')
+    cs = {'0.5': 'b',
+          '1.0': 'g',
+          '2.0': 'r'}    
+    def plot(ax, dpr, smear):
+        p = p_template.format(smear, dpr)
+        d = wt.kit.read_h5(p)
+        xi = normalize_delay(-d['d1'])
+        yi = normalize_delay(-d['d2'])
+        zi = d['arr'][20, 20].T
+        shifts = measure_shifts(xi, yi, zi)  # intensity level
+        zi = np.sqrt(zi)
+        xi, yi, zi = zoom_arrs(xi, yi, zi)
+        zi /= zi.max()
+        levels = np.linspace(0, 1, 200)
+        plt.contourf(xi, yi, zi, levels=levels, cmap=cmap)
+        plt.contour(xi, yi, zi, levels=contour_levels, colors='k', alpha=0.5)
+        adjust_spines(ax, cs[dpr])
+        ax.grid()
+        wt.artists.diagonal_line(xi, yi, lw=2, ls='-')
+        ax.axhline(0, c='k', lw=2)
+        ax.axvline(0, c='k', lw=2)
+        if ax.is_first_col():
+            ax.set_ylabel(delay_label(2), fontsize=18)
+        else:
+            plt.setp(ax.get_yticklabels(), visible=False)
+        if ax.is_last_row():
+            ax.set_xlabel(delay_label(1), fontsize=18)
+        else:
+            plt.setp(ax.get_xticklabels(), visible=False)        
+        ax.set_xlim(xi.min(), xi.max())
+        ax.set_ylim(yi.min(), yi.max())   
+        ticks = [-3, -2, -1, 0, 1, 2, 3]
+        ax.set_xticks(ticks)
+        ax.set_yticks(ticks)
+        # shifts
+        tau = shifts[:, 1]  # negative
+        T = shifts[:, 0] + tau
+        tau[tau>0] = -1e-6  # hack for display
+        c = 'y'
+        ax.plot(tau, T, lw=5, c=c)
+        ax.text(tau[0], T[0], '{:.2f}'.format(abs(tau[0])) , color=c, ha='right', va='bottom', fontsize=18)
+        ax.text(tau[-1]-0.1, -3.5, '{:.2f}'.format(abs(tau[-1])) , color=c, ha='right', va='center', fontsize=18)
+    # fill out
+    # row 1
+    ax = plt.subplot(gs[0, 0])
+    plot(ax, '0.5', '0.0')
+    ax.set_title(r'$\mathsf{\Gamma_{10}\Delta_t = 2.0}$', fontsize=18)
+    ax = plt.subplot(gs[0, 1])
+    plot(ax, '1.0', '0.0')
+    ax.set_title(r'$\mathsf{\Gamma_{10}\Delta_t = 1.0}$', fontsize=18)
+    ax = plt.subplot(gs[0, 2])
+    plot(ax, '2.0', '0.0')
+    ax.set_title(r'$\mathsf{\Gamma_{10}\Delta_t = 0.5}$', fontsize=18)
+    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 0.0}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    # row 2
+    ax = plt.subplot(gs[1, 0])
+    plot(ax, '0.5', '0.5')
+    ax = plt.subplot(gs[1, 1])
+    plot(ax, '1.0', '0.5')
+    ax = plt.subplot(gs[1, 2])
+    plot(ax, '2.0', '0.5')
+    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 0.5 \Delta_\omega}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    # row 3
+    ax = plt.subplot(gs[2, 0])
+    plot(ax, '0.5', '1.0')
+    ax = plt.subplot(gs[2, 1])
+    plot(ax, '1.0', '1.0')
+    ax = plt.subplot(gs[2, 2])
+    plot(ax, '2.0', '1.0')
+    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 1.0 \Delta_\omega}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    # row 4
+    ax = plt.subplot(gs[3, 0])
+    plot(ax, '0.5', '2.0')
+    ax = plt.subplot(gs[3, 1])
+    plot(ax, '1.0', '2.0')
+    ax = plt.subplot(gs[3, 2])
+    plot(ax, '2.0', '2.0')
+    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 2.0 \Delta_\omega}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    # colorbar
+    cax = plt.subplot(gs[:, -1])
+    wt.artists.plot_colorbar(cax=cax, cmap=cmap, label='amplitude', label_fontsize=18)
+    # finish
+    wt.artists.savefig(output_path, fig=fig, close=True)
+
+
+### spectral evolution full ###################################################
+
+
+output_path = os.path.join(directory, 'spectral evolution full.png')
+
+force_plotting = False
+
+if not os.path.isfile(output_path) or force_plotting:
+    # set up figure
+    fig, gs = wt.artists.create_figure(width='double', nrows=3,
+                                       cols=[1, 1, 1, 1, 1, 0, 'cbar'])
+    # worker method
+    p_template = os.path.join(directory, 'measured', 'smear {}', 'dpr {} TO all w1 w2 d1 d2.hdf5')
+    cs = {'0.5': 'b',
+          '1.0': 'g',
+          '2.0': 'r'}
+    labels = {'0.5': r'$\mathsf{\Gamma_{10}\Delta_t = 2.0}$',
+              '1.0': r'$\mathsf{\Gamma_{10}\Delta_t = 1.0}$',
+              '2.0': r'$\mathsf{\Gamma_{10}\Delta_t = 0.5}$'}
+    def plot(ax, dpr, smear, d2_index):
+        p = p_template.format(smear, dpr)
+        d = wt.kit.read_h5(p)
+        xi = normalize_frequency(d['w1'])
+        yi = normalize_frequency(d['w2'])
+        zi = d['arr'][:, :, 10, d2_index].T
+        zi **= 0.5
+        xi, yi, zi = zoom_arrs(xi, yi, zi)
+        zi /= zi.max()
+        levels = np.linspace(0, 1, 200)
+        ax.contourf(xi, yi, zi, levels=levels, cmap=cmap)
+        ax.contour(xi, yi, zi, levels=contour_levels, colors='k', alpha=0.5)
         ax.grid()
         wt.artists.diagonal_line(xi, yi)
-        ax.set_xlabel(frequency_label('1'))
-        ax.set_ylabel(frequency_label('2'))
-    # UL
+        ax.set_xlim(-2, 2)
+        ax.set_ylim(-2, 2)
+        ticks=[-1, 0, 1]
+        ax.set_xticks(ticks)
+        ax.set_yticks(ticks)
+        if ax.is_first_col():
+            ax.set_ylabel(frequency_label(2), fontsize=18)
+        else:
+            plt.setp(ax.get_yticklabels(), visible=False)
+        if ax.is_last_row():
+            ax.set_xlabel(frequency_label(1), fontsize=18)
+        else:
+            plt.setp(ax.get_xticklabels(), visible=False)
+        if ax.is_first_row():
+            d2 = normalize_delay(-d['d2'])[d2_index]
+            d2_text = '%.1f'%d2
+            label = r'$\mathsf{\tau_{21}=' + d2_text + r'\Delta_t}$'
+            ax.set_title(label, fontsize=18)
+        if d2_index == 15:
+            label = labels[dpr]
+            ax.text(1.01, 0.5, label, fontsize=18, rotation=-90, ha='left', va='center', transform=ax.transAxes)
+        adjust_spines(ax, cs[dpr])
+        levels = [0, 0.5, 1]
+        ax.contour(xi, yi, zi, levels=levels, colors='k',
+                   linewidths=2, alpha=1)
+    # fill
+    # row 1
+    ax = plt.subplot(gs[0, 0])
+    plot(ax, '0.5', '0.0', 5)
+    ax = plt.subplot(gs[0, 1])
+    plot(ax, '0.5', '0.0', 9)
+    ax = plt.subplot(gs[0, 2])
+    plot(ax, '0.5', '0.0', 10)
+    ax = plt.subplot(gs[0, 3])
+    plot(ax, '0.5', '0.0', 11)
+    ax = plt.subplot(gs[0, 4])
+    plot(ax, '0.5', '0.0', 15)
+    # row 2
+    ax = plt.subplot(gs[1, 0])
+    plot(ax, '1.0', '0.0', 5)
+    ax = plt.subplot(gs[1, 1])
+    plot(ax, '1.0', '0.0', 9)
     ax = plt.subplot(gs[1, 2])
-    zi = arr[:, :, 15, 5].T
-    plot(ax, zi)
-    plt.setp(ax.get_xticklabels(), visible=False)
-    # UR
+    plot(ax, '1.0', '0.0', 10)
+    ax = plt.subplot(gs[1, 3])
+    plot(ax, '1.0', '0.0', 11)
     ax = plt.subplot(gs[1, 4])
-    zi = arr[:, :, 10, 5].T
-    plot(ax, zi)
-    ax.set_ylabel(frequency_label('2'))
-    plt.setp(ax.get_xticklabels(), visible=False)
-    # LL
-    ax = plt.subplot(gs[4, 2])
-    zi = arr[:, :, 15, 10].T
-    plot(ax, zi)
-    ax.set_ylabel(frequency_label('2'))
-    plt.setp(ax.get_xticklabels(), visible=False)
-    # LR
-    ax = plt.subplot(gs[4, 4])
-    zi = arr[:, :, 10, 10].T
-    plot(ax, zi)
-    ax.set_ylabel(frequency_label('2'))
-    plt.setp(ax.get_xticklabels(), visible=False)
-    # left colorbar
-    cax = plt.subplot(gs[:, 0])
-    wt.artists.plot_colorbar(cax=cax, cmap=coolwarm, ticklocation='left')
+    plot(ax, '1.0', '0.0', 15)
+    # row 3
+    ax = plt.subplot(gs[2, 0])
+    plot(ax, '2.0', '0.0', 5)
+    ax = plt.subplot(gs[2, 1])
+    plot(ax, '2.0', '0.0', 9)
+    ax = plt.subplot(gs[2, 2])
+    plot(ax, '2.0', '0.0', 10)
+    ax = plt.subplot(gs[2, 3])
+    plot(ax, '2.0', '0.0', 11)
+    ax = plt.subplot(gs[2, 4])
+    plot(ax, '2.0', '0.0', 15)
+    # colorbar
     cax = plt.subplot(gs[:, -1])
-    wt.artists.plot_colorbar(cax=cax, cmap='default')
+    wt.artists.plot_colorbar(cax=cax, cmap=cmap, label='amplitude', label_fontsize=18)
+
     # finish
-    wt.artists.savefig(output_path)
+    wt.artists.savefig(output_path, fig=fig, close=True)
+
+
+### wigners full ##############################################################
+
+
+output_path = os.path.join(directory, 'wigners full.png')
+
+force_plotting = True
+
+if not os.path.isfile(output_path) or force_plotting:
+    # set up figure
+    fig, gs = wt.artists.create_figure(width='double', nrows=3,
+                                       cols=[1, 1, 1, 1, 1, 0, 'cbar'])
+    # worker method
+    p_template = os.path.join(directory, 'measured', 'smear {}', 'dpr {} TO all w1 w2 d1 d2.hdf5')
+    cs = {'0.5': 'b',
+          '1.0': 'g',
+          '2.0': 'r'}
+    labels = {'0.5': r'$\mathsf{\Gamma_{10}\Delta_t = 2.0}$',
+              '1.0': r'$\mathsf{\Gamma_{10}\Delta_t = 1.0}$',
+              '2.0': r'$\mathsf{\Gamma_{10}\Delta_t = 0.5}$'}
+    def plot(ax, dpr, smear, w2_index):
+        p = p_template.format(smear, dpr)
+        d = wt.kit.read_h5(p)
+        xi = normalize_frequency(d['w1'])
+        yi = normalize_delay(-d['d2'])
+        w2 = normalize_frequency(d['w2'])
+        zi = d['arr'][:, w2_index, 10, :].T
+        zi **= 0.5
+        xi, yi, zi = zoom_arrs(xi, yi, zi)
+        zi /= zi.max()
+        levels = np.linspace(0, 1, 200)
+        ax.contourf(xi, yi, zi, levels=levels, cmap=cmap)
+        ax.contour(xi, yi, zi, levels=contour_levels, colors='k', alpha=0.5)
+        ax.grid()
+        ax.axhline(0, c='k', lw=2)
+        ax.axvline(w2[w2_index], lw=4, alpha=0.25, c='k')
+        ax.set_xlim(-3, 3)
+        ax.set_ylim(-4, 4)
+        ticks=[-2, 0, 2]
+        ax.set_xticks(ticks)
+        ax.set_yticks(ticks)
+        if ax.is_first_col():
+            ax.set_ylabel(delay_label(2), fontsize=18)
+        else:
+            plt.setp(ax.get_yticklabels(), visible=False)
+        if ax.is_last_row():
+            ax.set_xlabel(frequency_label(1), fontsize=18)
+        else:
+            plt.setp(ax.get_xticklabels(), visible=False)
+        if w2_index == 28:
+            label = labels[dpr]
+            ax.text(1.01, 0.5, label, fontsize=18, rotation=-90, ha='left', va='center', transform=ax.transAxes)
+        adjust_spines(ax, cs[dpr])
+    # fill
+    # row 1
+    ax = plt.subplot(gs[0, 0])
+    plot(ax, '0.5', '0.0', 12)
+    ax = plt.subplot(gs[0, 1])
+    plot(ax, '0.5', '0.0', 16)
+    ax = plt.subplot(gs[0, 2])
+    plot(ax, '0.5', '0.0', 20)
+    ax = plt.subplot(gs[0, 3])
+    plot(ax, '0.5', '0.0', 24)
+    ax = plt.subplot(gs[0, 4])
+    plot(ax, '0.5', '0.0', 28)
+    # row 2
+    ax = plt.subplot(gs[1, 0])
+    plot(ax, '1.0', '0.0', 12)
+    ax = plt.subplot(gs[1, 1])
+    plot(ax, '1.0', '0.0', 16)
+    ax = plt.subplot(gs[1, 2])
+    plot(ax, '1.0', '0.0', 20)
+    ax = plt.subplot(gs[1, 3])
+    plot(ax, '1.0', '0.0', 24)
+    ax = plt.subplot(gs[1, 4])
+    plot(ax, '1.0', '0.0', 28)
+    # row 3
+    ax = plt.subplot(gs[2, 0])
+    plot(ax, '2.0', '0.0', 12)
+    ax = plt.subplot(gs[2, 1])
+    plot(ax, '2.0', '0.0', 16)
+    ax = plt.subplot(gs[2, 2])
+    plot(ax, '2.0', '0.0', 20)
+    ax = plt.subplot(gs[2, 3])
+    plot(ax, '2.0', '0.0', 24)
+    ax = plt.subplot(gs[2, 4])
+    plot(ax, '2.0', '0.0', 28)
+    # colorbar
+    cax = plt.subplot(gs[:, -1])
+    wt.artists.plot_colorbar(cax=cax, cmap=cmap, label='amplitude', label_fontsize=18)
+
+    # finish
+    wt.artists.savefig(output_path, fig=fig, close=True)
+
+
+### inhom spectral evolution full #############################################
+
+
+output_path = os.path.join(directory, 'inhom spectral evolution full.png')
+
+force_plotting = False
+
+if not os.path.isfile(output_path) or force_plotting:
+    # set up figure
+    fig, gs = wt.artists.create_figure(width='double', nrows=3,
+                                       cols=[1, 1, 1, 1, 1, 0, 'cbar'])
+    # worker method
+    p_template = os.path.join(directory, 'measured', 'smear {}', 'dpr {} TO all w1 w2 d1 d2.hdf5')
+    cs = {'0.5': 'b',
+          '1.0': 'g',
+          '2.0': 'r'}
+    labels = {'0.5': r'$\mathsf{\Gamma_{10}\Delta_t = 2.0}$',
+              '1.0': r'$\mathsf{\Gamma_{10}\Delta_t = 1.0}$',
+              '2.0': r'$\mathsf{\Gamma_{10}\Delta_t = 0.5}$'}
+    def plot(ax, dpr, smear, d2_index):
+        p = p_template.format(smear, dpr)
+        d = wt.kit.read_h5(p)
+        xi = normalize_frequency(d['w1'])
+        yi = normalize_frequency(d['w2'])
+        zi = d['arr'][:, :, 10, d2_index].T
+        zi **= 0.5
+        xi, yi, zi = zoom_arrs(xi, yi, zi)
+        zi /= zi.max()
+        levels = np.linspace(0, 1, 200)
+        ax.contourf(xi, yi, zi, levels=levels, cmap=cmap)
+        ax.contour(xi, yi, zi, levels=contour_levels, colors='k', alpha=0.5)
+        ax.grid()
+        wt.artists.diagonal_line(xi, yi)
+        ax.set_xlim(-2, 2)
+        ax.set_ylim(-2, 2)
+        ticks=[-1, 0, 1]
+        ax.set_xticks(ticks)
+        ax.set_yticks(ticks)
+        if ax.is_first_col():
+            ax.set_ylabel(frequency_label(2), fontsize=18)
+        else:
+            plt.setp(ax.get_yticklabels(), visible=False)
+        if ax.is_last_row():
+            ax.set_xlabel(frequency_label(1), fontsize=18)
+        else:
+            plt.setp(ax.get_xticklabels(), visible=False)
+        if ax.is_first_row():
+            d2 = normalize_delay(-d['d2'])[d2_index]
+            d2_text = '%.1f'%d2
+            label = r'$\mathsf{\tau_{21}=' + d2_text + r'\Delta_t}$'
+            ax.set_title(label, fontsize=18)
+        if d2_index == 15:
+            label = labels[dpr]
+            ax.text(1.01, 0.5, label, fontsize=18, rotation=-90, ha='left', va='center', transform=ax.transAxes)
+        adjust_spines(ax, cs[dpr])
+        levels = [0, 0.5, 1]
+        ax.contour(xi, yi, zi, levels=levels, colors='k',
+                   linewidths=2, alpha=1)
+    # fill
+    # row 1
+    ax = plt.subplot(gs[0, 0])
+    plot(ax, '0.5', '2.0', 5)
+    ax = plt.subplot(gs[0, 1])
+    plot(ax, '0.5', '2.0', 9)
+    ax = plt.subplot(gs[0, 2])
+    plot(ax, '0.5', '2.0', 10)
+    ax = plt.subplot(gs[0, 3])
+    plot(ax, '0.5', '2.0', 11)
+    ax = plt.subplot(gs[0, 4])
+    plot(ax, '0.5', '2.0', 15)
+    # row 2
+    ax = plt.subplot(gs[1, 0])
+    plot(ax, '1.0', '1.0', 5)
+    ax = plt.subplot(gs[1, 1])
+    plot(ax, '1.0', '1.0', 9)
+    ax = plt.subplot(gs[1, 2])
+    plot(ax, '1.0', '1.0', 10)
+    ax = plt.subplot(gs[1, 3])
+    plot(ax, '1.0', '1.0', 11)
+    ax = plt.subplot(gs[1, 4])
+    plot(ax, '1.0', '1.0', 15)
+    # row 3
+    ax = plt.subplot(gs[2, 0])
+    plot(ax, '2.0', '0.5', 5)
+    ax = plt.subplot(gs[2, 1])
+    plot(ax, '2.0', '0.5', 9)
+    ax = plt.subplot(gs[2, 2])
+    plot(ax, '2.0', '0.5', 10)
+    ax = plt.subplot(gs[2, 3])
+    plot(ax, '2.0', '0.5', 11)
+    ax = plt.subplot(gs[2, 4])
+    plot(ax, '2.0', '0.5', 15)
+    # colorbar
+    cax = plt.subplot(gs[:, -1])
+    wt.artists.plot_colorbar(cax=cax, cmap=cmap, label='amplitude', label_fontsize=18)
+
+    # finish
+    wt.artists.savefig(output_path, fig=fig, close=True)
+
+
+### 2D frequencies at zero ####################################################
+
+
+output_path = os.path.join(directory, '2D frequences at zero.png')
+
+force_plotting = False
+
+if not os.path.isfile(output_path) or force_plotting:
+    # set up figure
+    fig, gs = wt.artists.create_figure(width=12, nrows=4,
+                                       cols=[1, 1, 1, 0, 'cbar'])
+    # fit method
+    def get_widths(xi, yi, zi):
+        '''
+        defined on the amplitude level
+        '''
+        # go by fitting
+        def gauss(p, x):
+            A, mu, w = p
+            z = (mu - x) / (np.sqrt(2) * w)
+            out = A * np.exp(-z**2)
+            return out
+        def erf1(p, x, y):
+            return y - gauss(p,x)
+        outs = []
+        # diagonal
+        y = zi.diagonal()
+        p0 = []
+        p0.append(np.nanmax(y))  # amplitude
+        p0.append(0.)  # center
+        p0.append(1.)  # width
+        out = leastsq(erf1, p0, args=(xi, y), full_output=False)[0]
+        outs.append(2.35482*out[2])
+        # antidiagonal
+        y = zi[...,::-1].diagonal()
+        p0 = []
+        p0.append(np.nanmax(y))  # amplitude
+        p0.append(0.)  # center
+        p0.append(1.)  # width
+        out = leastsq(erf1, p0, args=(xi, y), full_output=False)[0]
+        outs.append(2.35482*out[2])
+        return outs
+    # worker method
+    p_template = os.path.join(directory, 'measured', 'smear {}', 'dpr {} TO all w1 w2 d1 d2.hdf5')
+    cs = {'0.5': 'b',
+          '1.0': 'g',
+          '2.0': 'r'}
+    def plot(ax, dpr, smear):
+        p = p_template.format(smear, dpr)
+        d = wt.kit.read_h5(p)
+        xi = normalize_frequency(d['w1'])
+        yi = normalize_frequency(d['w2'])
+        zi = d['arr'][:, :, 10, 10].T
+        zi = np.sqrt(zi)
+        xi, yi, zi = zoom_arrs(xi, yi, zi)
+        zi /= zi.max()
+        levels = np.linspace(0, 1, 200)
+        plt.contourf(xi, yi, zi, levels=levels, cmap=cmap)
+        plt.contour(xi, yi, zi, levels=contour_levels, colors='k', alpha=0.5)
+        adjust_spines(ax, cs[dpr])
+        ax.grid()
+        wt.artists.diagonal_line(xi, yi)
+        if ax.is_first_col():
+            ax.set_ylabel(frequency_label(2), fontsize=18)
+        else:
+            plt.setp(ax.get_yticklabels(), visible=False)
+        if ax.is_last_row():
+            ax.set_xlabel(frequency_label(1), fontsize=18)
+        else:
+            plt.setp(ax.get_xticklabels(), visible=False)        
+        ax.set_xlim(-4, 4)
+        ax.set_ylim(-4, 4)   
+        ticks = [-3, -2, -1, 0, 1, 2, 3]
+        ax.set_xticks(ticks)
+        ax.set_yticks(ticks)
+        # ellipse
+        a, b = get_widths(xi, yi, zi)
+        e = Ellipse(xy=[0, 0], width=a, height=b, angle=45, color='y', lw=5, fill=False)
+        e.set_alpha(1)
+        e.set_zorder(500)
+        ax.add_artist(e)
+        ellipticity = ((a**2)-(b**2))/((a**2)+(b**2))
+        label = r'${\mathcal{E}=' + '{:.2f}'.format(ellipticity) + r'}$'
+        wt.artists.corner_text(label, corner='LR', fontsize=18)
+    # fill out
+    # row 1
+    ax = plt.subplot(gs[0, 0])
+    plot(ax, '0.5', '0.0')
+    ax.set_title(r'$\mathsf{\Gamma_{10}\Delta_t = 2.0}$', fontsize=18)
+    ax = plt.subplot(gs[0, 1])
+    plot(ax, '1.0', '0.0')
+    ax.set_title(r'$\mathsf{\Gamma_{10}\Delta_t = 1.0}$', fontsize=18)
+    ax = plt.subplot(gs[0, 2])
+    plot(ax, '2.0', '0.0')
+    ax.set_title(r'$\mathsf{\Gamma_{10}\Delta_t = 0.5}$', fontsize=18)
+    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 0.0}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    # row 2
+    ax = plt.subplot(gs[1, 0])
+    plot(ax, '0.5', '0.5')
+    ax = plt.subplot(gs[1, 1])
+    plot(ax, '1.0', '0.5')
+    ax = plt.subplot(gs[1, 2])
+    plot(ax, '2.0', '0.5')
+    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 0.5 \Delta_\omega}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    # row 3
+    ax = plt.subplot(gs[2, 0])
+    plot(ax, '0.5', '1.0')
+    ax = plt.subplot(gs[2, 1])
+    plot(ax, '1.0', '1.0')
+    ax = plt.subplot(gs[2, 2])
+    plot(ax, '2.0', '1.0')
+    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 1.0 \Delta_\omega}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    # row 4
+    ax = plt.subplot(gs[3, 0])
+    plot(ax, '0.5', '2.0')
+    ax = plt.subplot(gs[3, 1])
+    plot(ax, '1.0', '2.0')
+    ax = plt.subplot(gs[3, 2])
+    plot(ax, '2.0', '2.0')
+    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 2.0 \Delta_\omega}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    # colorbar
+    cax = plt.subplot(gs[:, -1])
+    wt.artists.plot_colorbar(cax=cax, cmap=cmap, label='amplitude', label_fontsize=18)
+    # finish
+    wt.artists.savefig(output_path, fig=fig, close=True)
+
+
+### 2D frequencies at -4 ######################################################
+
+
+output_path = os.path.join(directory, '2D frequences at -4.png')
+
+force_plotting = False
+
+if not os.path.isfile(output_path) or force_plotting:
+    # set up figure
+    fig, gs = wt.artists.create_figure(width=12, nrows=4,
+                                       cols=[1, 1, 1, 0, 'cbar'])
+    # fit method
+    def get_widths(xi, yi, zi):
+        '''
+        defined on the amplitude level
+        '''
+        # go by fitting
+        def gauss(p, x):
+            A, mu, w = p
+            z = (mu - x) / (np.sqrt(2) * w)
+            out = A * np.exp(-z**2)
+            return out
+        def erf1(p, x, y):
+            return y - gauss(p,x)
+        outs = []
+        # diagonal
+        y = zi.diagonal()
+        p0 = []
+        p0.append(np.nanmax(y))  # amplitude
+        p0.append(0.)  # center
+        p0.append(1.)  # width
+        out = leastsq(erf1, p0, args=(xi, y), full_output=False)[0]
+        outs.append(2.35482*out[2])
+        # antidiagonal
+        y = np.flipud(zi).diagonal()
+        p0 = []
+        p0.append(np.nanmax(y))  # amplitude
+        p0.append(0.)  # center
+        p0.append(1.)  # width
+        out = leastsq(erf1, p0, args=(xi, y), full_output=False)[0]
+        outs.append(2.35482*out[2])
+        return outs
+    # worker method
+    p_template = os.path.join(directory, 'measured', 'smear {}', 'dpr {} TO all w1 w2 d1 d2.hdf5')
+    cs = {'0.5': 'b',
+          '1.0': 'g',
+          '2.0': 'r'}
+    def plot(ax, dpr, smear):
+        p = p_template.format(smear, dpr)
+        d = wt.kit.read_h5(p)
+        xi = normalize_frequency(d['w1'])
+        yi = normalize_frequency(d['w2'])
+        zi = d['arr'][:, :, 10, 20].T
+        zi = np.sqrt(zi)
+        xi, yi, zi = zoom_arrs(xi, yi, zi)
+        zi /= zi.max()
+        levels = np.linspace(0, 1, 200)
+        plt.contourf(xi, yi, zi, levels=levels, cmap=cmap)
+        plt.contour(xi, yi, zi, levels=contour_levels, colors='k', alpha=0.5)
+        adjust_spines(ax, cs[dpr])
+        ax.grid()
+        wt.artists.diagonal_line(xi, yi)
+        if ax.is_first_col():
+            ax.set_ylabel(frequency_label(2), fontsize=18)
+        else:
+            plt.setp(ax.get_yticklabels(), visible=False)
+        if ax.is_last_row():
+            ax.set_xlabel(frequency_label(1), fontsize=18)
+        else:
+            plt.setp(ax.get_xticklabels(), visible=False)        
+        ax.set_xlim(-4, 4)
+        ax.set_ylim(-4, 4)   
+        ticks = [-3, -2, -1, 0, 1, 2, 3]
+        ax.set_xticks(ticks)
+        ax.set_yticks(ticks)
+        # ellipse
+        a, b = get_widths(xi, yi, zi)
+        e = Ellipse(xy=[0, 0], width=a, height=b, angle=45, color='y', lw=5, fill=False)
+        e.set_alpha(1)
+        e.set_zorder(500)
+        ax.add_artist(e)
+        ellipticity = ((a**2)-(b**2))/((a**2)+(b**2))
+        label = r'${\mathcal{E}=' + '{:.2f}'.format(ellipticity) + r'}$'
+        wt.artists.corner_text(label, corner='LR', fontsize=18)
+    # fill out
+    # row 1
+    ax = plt.subplot(gs[0, 0])
+    plot(ax, '0.5', '0.0')
+    ax.set_title(r'$\mathsf{\Gamma_{10}\Delta_t = 2.0}$', fontsize=18)
+    ax = plt.subplot(gs[0, 1])
+    plot(ax, '1.0', '0.0')
+    ax.set_title(r'$\mathsf{\Gamma_{10}\Delta_t = 1.0}$', fontsize=18)
+    ax = plt.subplot(gs[0, 2])
+    plot(ax, '2.0', '0.0')
+    ax.set_title(r'$\mathsf{\Gamma_{10}\Delta_t = 0.5}$', fontsize=18)
+    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 0.0}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    # row 2
+    ax = plt.subplot(gs[1, 0])
+    plot(ax, '0.5', '0.5')
+    ax = plt.subplot(gs[1, 1])
+    plot(ax, '1.0', '0.5')
+    ax = plt.subplot(gs[1, 2])
+    plot(ax, '2.0', '0.5')
+    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 0.5 \Delta_\omega}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    # row 3
+    ax = plt.subplot(gs[2, 0])
+    plot(ax, '0.5', '1.0')
+    ax = plt.subplot(gs[2, 1])
+    plot(ax, '1.0', '1.0')
+    ax = plt.subplot(gs[2, 2])
+    plot(ax, '2.0', '1.0')
+    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 1.0 \Delta_\omega}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    # row 4
+    ax = plt.subplot(gs[3, 0])
+    plot(ax, '0.5', '2.0')
+    ax = plt.subplot(gs[3, 1])
+    plot(ax, '1.0', '2.0')
+    ax = plt.subplot(gs[3, 2])
+    plot(ax, '2.0', '2.0')
+    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 2.0 \Delta_\omega}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    # colorbar
+    cax = plt.subplot(gs[:, -1])
+    wt.artists.plot_colorbar(cax=cax, cmap=cmap, label='amplitude', label_fontsize=18)
+    # finish
+    wt.artists.savefig(output_path, fig=fig, close=True)
+
+
+
+
+
+
+
