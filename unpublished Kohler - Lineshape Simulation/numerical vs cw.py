@@ -48,15 +48,16 @@ def import_npzs():
     d1 = x['d1'] / 50.
     d2 = x['d2'] / 50.
     # keys:  dpr,TO,w1,w2,d1,d2,arr
-    print 'array imported'
+    print('array imported')
     return x['arr']
 
-data = import_npzs()
+#data = import_npzs()
 
 # redefine w1 and w2 to have twice as many elements
+w1 = w2 = (np.linspace(5500,8500,num=41) - 7000.) * wn_to_rel
 w = np.linspace(w1.min(), w1.max(), num = w1.size * 3)
 # keys:  dpr,TO,w1,w2,d1,d2,arr
-num_sim = data[1,-1] # dpr index 0 is CW-ish, dpr index 2 is impulsive-ish
+#num_sim = data[1,-1] # dpr index 0 is CW-ish, dpr index 2 is impulsive-ish
 
 ### define the cw equations
 def gen_f_cw(l,  # l = lambda1 * lambda2 * lambda3 determines the sign
@@ -87,7 +88,7 @@ def f_cw(omegas, # omegas = [omegax, omegay, omegaz] are efield frequencies
     return out
 
 ### apply pulse widths 
-# to avoid error, to explicit integrals for now--don't need to be fast
+# to avoid error, do explicit integrals for now--don't need to be fast
 def C(w):
     """
     spectral envelope
@@ -204,7 +205,6 @@ plt.xticks(ticks)
 plt.yticks(ticks)
 plt.grid(b=True)
 
-
 ax242 = f1.add_subplot(gs1[0:2,1], aspect='equal')
 plt.contourf(w, w, np.abs(convolved2.T),
     levels=np.linspace(0,1,num=256), cmap=f.cm.chw2)
@@ -222,6 +222,7 @@ plt.grid(b=True)
 
 ax243 = f1.add_subplot(gs1[0:2,2], aspect='equal')
 # keys:  w1,w2,d1,d2,arr
+'''
 num_sim1 = zoom(num_sim[:,:,10,10], 3)**0.5
 num_sim1 /= np.abs(num_sim1).max()
 w_zoom = np.linspace(w1.min(), w1.max(), num = w1.size * 3)
@@ -265,7 +266,7 @@ plt.ylim(-.1,1.1)
 plt.xticks(ticks)
 #plt.yticks(ticks)
 plt.grid(b=True)
-
+'''
 
 ### Case 2:  pathway 5/6 (2 and 2' overlapped), no inhomogeneity
 ax245 = f1.add_subplot(gs1[2:,0], aspect='equal')
@@ -294,7 +295,7 @@ plt.xticks(ticks)
 plt.yticks(ticks)
 plt.grid(b=True)
 
-
+'''
 ax247 = f1.add_subplot(gs1[2:,2], aspect='equal')
 # keys:  w1,w2,d1,d2,arr
 num_sim2 = zoom(num_sim[:,:,10,-1]**0.5,3)
@@ -344,6 +345,6 @@ for ax, color in zip([ax241, ax245, ax242, ax246, ax243, ax247],
 f1.savefig(r'figures\num vs cw pulse overlap.png', transparent=True, dpi=200)
 
 ### Case 3:  pathway 1, no overlap, no inhomogeneity (compare with impulsive)
-
+'''
 
 

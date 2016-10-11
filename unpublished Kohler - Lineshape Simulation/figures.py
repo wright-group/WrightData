@@ -291,8 +291,6 @@ if not os.path.isfile(output_path) or force_plotting:
 
 
 ### simulation overview #######################################################
-# TODO: subplot b, switch coherence subscripts
-
 
 
 output_path = os.path.join(directory, 'simulation overview.png')
@@ -973,7 +971,6 @@ if not os.path.isfile(output_path) or force_plotting:
     cmap = wt.artists.colormaps['default']
     def plot(ax, p, w2_position):
         d = wt.kit.read_h5(p)
-        # TODO (?) put version of this for other dprs in SI
         w2_d = {'rr': 12, 'r':16, 'c': 20, 'b':24, 'bb': 28}    
         w2_index = w2_d[w2_position]
         arr = d['arr']
@@ -1227,16 +1224,275 @@ if not os.path.isfile(output_path) or force_plotting:
     wt.artists.savefig(output_path, fig=fig, close=True)
 
 
+### steady state ##############################################################
+
+
+output_path = os.path.join(directory, 'steady state.png')
+
+force_plotting = True
+
+if not os.path.isfile(output_path) or force_plotting:
+    # create figure
+    fig, gs = wt.artists.create_figure(width='double', cols=[1, 1, 1, 1, 1, 1, 'cbar', 0.25, 2], nrows=4)
+    def plot(ax, xi, yi, zi, ax_diag, ax_anti, c):
+        '''
+        accepts data on the amplitude level
+        '''
+        # 2D
+        ax.contourf(xi, yi, zi)
+        ax.set_xlim(-2, 2)
+        ax.set_ylim(-2, 2)
+        levels = np.linspace(0, 1, 200)
+        plt.contourf(xi, yi, zi, levels=levels, cmap=cmap)
+        plt.contour(xi, yi, zi, levels=contour_levels, colors='k', alpha=0.5)
+        ax.grid()
+        ax.set_xticks([-2, -1, 0, 1, 2])
+        ax.set_yticks([-2, -1, 0, 1, 2])
+        ax.plot([-2, 2], [-2, 2], c=c, lw=4, ls='--', alpha=0.5)
+        ax.plot([-2, 2], [2, -2], c=c, lw=4, ls='-', alpha=0.5)
+        adjust_spines(ax, 'g')
+        if ax.rowNum == 2:
+            ax.set_xlabel(frequency_label('1'), fontsize=18)
+        else:
+            plt.setp(ax.get_xticklabels(), visible=False)
+        if ax.is_first_col():
+            ax.set_ylabel(frequency_label('2'), fontsize=18)
+        else:
+            plt.setp(ax.get_yticklabels(), visible=False)
+        # diagonal
+        diag = np.diag(zi)
+        ax_diag.plot(xi, diag, c=c, lw=2, ls='--', alpha=0.5)
+        ax_diag.grid()
+        ax_diag.set_xlim(-2, 2)
+        ax_diag.set_ylim(0, 1.1)
+        ax_diag.set_xticks([-2, -1, 0, 1, 2])
+        ax_diag.set_yticks([0, 0.5, 1])
+        plt.setp(ax_diag.get_xticklabels(), visible=False)
+        plt.setp(ax_diag.get_yticklabels(), visible=False)
+        adjust_spines(ax_diag, 'g')
+        # antidiagonal
+        zi = np.flipud(zi)
+        diag = np.diag(zi)
+        ax_anti.plot(xi, diag, c=c, lw=2, alpha=0.5)
+        ax_anti.grid()
+        ax_anti.set_xlim(-2, 2)
+        ax_anti.set_ylim(0, 1.1)
+        ax_anti.set_xticks([-2, -1, 0, 1, 2])
+        ax_anti.set_yticks([0, 0.5, 1])
+        plt.setp(ax_anti.get_yticklabels(), visible=False)
+        if not ax_anti.is_last_row():
+            plt.setp(ax_anti.get_xticklabels(), visible=False)
+        else:
+            ax_anti.set_xlabel(frequency_label('2'), fontsize=18)
+        adjust_spines(ax_anti, 'g')
+    for delay_index, delay in enumerate(['zero delay', 'pw56']):
+        first_row = delay_index*2
+        # 1D plots
+        ax_diag = plt.subplot(gs[first_row, -1])
+        ax_anti = plt.subplot(gs[first_row+1, -1])
+        # infinite lifetime
+        ax = plt.subplot(gs[first_row:first_row+2, 0:2])
+        p = os.path.join('precalculated', 'cw {} infinite lifetime.hdf5'.format(delay))
+        d = wt.kit.read_h5(p)
+        xi = d['w1']
+        yi = d['w2']
+        zi = d['arr']
+        plot(ax, xi, yi, zi, ax_diag, ax_anti, 'orange')
+        if delay_index == 0:
+            ax.set_title(r'Steady State, $\Gamma_{11} \rightarrow \infty$', fontsize=18)
+        # finite lifetime
+        ax = plt.subplot(gs[first_row:first_row+2, 2:4])
+        p = os.path.join('precalculated', 'cw {} finite lifetime.hdf5'.format(delay))
+        d = wt.kit.read_h5(p)
+        xi = d['w1']
+        yi = d['w2']
+        zi = d['arr']
+        plot(ax, xi, yi, zi, ax_diag, ax_anti, 'm')
+        if delay_index == 0:
+            ax.set_title('Steady State, $\Gamma_{11} \Delta_t = 1$', fontsize=18)
+        # actual
+        ax = plt.subplot(gs[first_row:first_row+2, 4:6])
+        p = os.path.join(directory, 'measured', 'smear 0.0', 'dpr 1.0 TO all w1 w2 d1 d2.hdf5')
+        d = wt.kit.read_h5(p)
+        xi = normalize_frequency(d['w1'])
+        yi = normalize_frequency(d['w2'])
+        if delay == 'zero delay':
+            d2i = 10
+        elif delay == 'pw56':
+            d2i = -1
+        zi = d['arr'][:, :, 10, d2i].T
+        zi **= 0.5
+        zi /= zi.max()
+        xi, yi, zi = zoom_arrs(xi, yi, zi)
+        plot(ax, xi, yi, zi, ax_diag, ax_anti, 'k')
+        if delay_index == 0:
+            ax.set_title('Actual', fontsize=18)
+            ax.text(2.5, 0.5, r'$\mathsf{T = -\tau_{21} = 0}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+        else:
+            ax.text(2.5, 0.5, r'$\mathsf{T = -\tau_{21} = 4 \Delta_t}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    # colorbar
+    ticks = np.linspace(0, 1, 11)
+    cax = plt.subplot(gs[:, -3])
+    matplotlib.colorbar.ColorbarBase(cax, cmap=cmap, ticks=ticks)
+    cax.set_ylabel('amplitude', fontsize=18)
+    # finish
+    wt.artists.savefig(output_path, fig=fig, close=True)
+
+
 ### metrics of correlation ####################################################
 
 
-# TODO:
+output_path = os.path.join(directory, 'metrics.png')
 
+force_plotting = True
 
-### driven ####################################################################
-
-
-# TODO:
+if not os.path.isfile(output_path) or force_plotting:
+    # create figure
+    aspects = [[[0, 0], 0.6], [[1, 0], 0.6], [[2, 0], 0.1]]
+    fig, gs = wt.artists.create_figure(width='single', nrows=4, cols=[1, 1, 0], aspects=aspects, hspace=0.33, wspace=0.33)
+    for delay_index, delay in enumerate([0., -4.]):
+        p = os.path.join('precalculated', 'metrics.txt')
+        arr = np.genfromtxt(p)
+        # 0 dpr
+        # 1 smear
+        # 2 delay
+        # 3 ellipticity
+        # 4 shift
+        # organize ------------------------------------------------------------
+        delta_gamma = {}
+        for key, c in zip(['2.0', '1.0', '0.5'], ['b', 'g', 'r']):
+            l = []
+            for measurement in arr:
+                if measurement[2] == delay and 1/measurement[0] == float(key):
+                    l.append(measurement)
+            delta_gamma[key] = (l, c)
+        delta_inhom_over_gamma = {}
+        for key, ls in zip(['0.0', '0.5', '1.0', '2.0'], ['-', ':', '-.', '--']):
+            l = []
+            for measurement in arr:
+                c = measurement[1] * measurement[0]
+                if measurement[2] == delay and c == float(key):
+                    l.append(measurement)
+            delta_inhom_over_gamma[key] = (l, ls)
+        # 3PEPS ---------------------------------------------------------------
+        ax = plt.subplot(gs[0, delay_index])
+        # points
+        for item in delta_gamma.values():
+            for measurement in item[0]:
+                c = measurement[1] * measurement[0]
+                if c == 0.:
+                    marker = 'x'
+                    s = 20
+                else:
+                    marker = 'o'
+                    s = 100*float(c)                
+                ax.scatter(measurement[1], measurement[4], s=s, marker=marker, alpha=0.5, color='k', edgecolor='none')
+        # delta gamma
+        for key, item in delta_gamma.items():
+            measurements, c = item
+            arr = np.array(measurements)
+            if arr.size > 0:
+                ax.plot(arr[:, 1], arr[:, 4], c=c, lw=2, label=key)
+        # delta_inhom_over_gamma
+        for key, item in delta_inhom_over_gamma.items():
+            measurements, ls = item
+            arr = np.array(measurements)
+            if arr.size > 0:
+                lw = (float(key)*10) + 1
+                ax.plot(arr[:, 1], arr[:, 4], c='k', ls='-', alpha=0.25, lw=2)
+        ax.grid()
+        ax.set_yticks([0, 0.5, 1])
+        ax.set_xlim(0, 2.2)
+        ax.set_ylim(0, 1.1)
+        plt.setp(ax.get_xticklabels(), visible=False)
+        if delay_index == 1:
+            plt.setp(ax.get_yticklabels(), visible=False)
+            ax.set_title(r'$\mathsf{T = -\tau_{21} = 4 \Delta_t}$')
+            legend = plt.legend(bbox_to_anchor=(0.975, 1), loc=2, borderaxespad=0., frameon=False)
+            legend.set_title(r'$\mathsf{\Gamma_{10}\Delta_t}$')
+        else:
+            ax.set_ylabel(r'$\mathsf{\Delta_{\mathrm{3PEPS}}/\Delta_t}$', fontsize=18)
+            ax.set_title(r'$\mathsf{T = -\tau_{21} = 0}$')
+        # ellipticity ---------------------------------------------------------
+        ax = plt.subplot(gs[1, delay_index])
+        # points
+        for item in delta_gamma.values():
+            for measurement in item[0]:
+                c = measurement[1] * measurement[0]
+                if c == 0.:
+                    marker = 'x'
+                    s = 20
+                else:
+                    marker = 'o'
+                    s = 100*float(c)                
+                ax.scatter(measurement[1], measurement[3], s=s, marker=marker, alpha=0.5, color='k', edgecolor='none')
+        # delta gamma
+        for key, item in delta_gamma.items():
+            measurements, c = item
+            arr = np.array(measurements)
+            if arr.size > 0:
+                ax.plot(arr[:, 1], arr[:, 3], c=c, lw=2)
+        # delta_inhom_over_gamma
+        for key, item in delta_inhom_over_gamma.items():
+            measurements, ls = item
+            arr = np.array(measurements)
+            if arr.size > 0:
+                ax.plot(arr[:, 1], arr[:, 3], c='k', ls='-', alpha=0.25, lw=2)
+        ax.grid()
+        ax.set_xlabel(r'$\mathsf{\Delta_{\mathrm{inhom}}/\Delta_\omega}$', fontsize=18)
+        ax.set_yticks([0, 0.5, 1])
+        ax.set_xlim(0, 2.2)
+        ax.set_ylim(0, 1.1)
+        if delay_index == 1:
+            plt.setp(ax.get_yticklabels(), visible=False)
+            # fake a legend
+            for c in ['0.0', '0.25', '0.5', '1.0', '2.0', '4.0']:
+                if c == '0.0':
+                    marker = 'x'
+                    s = 20
+                else:
+                    marker = 'o'
+                    s = 100*float(c)
+                ax.scatter(-1, -1, s=s, marker=marker, alpha=0.5, color='k', edgecolor='none', label=c)
+            legend = plt.legend(bbox_to_anchor=(0.975, 1), loc=2, borderaxespad=0., frameon=False, scatterpoints=1)
+            legend.set_title(r'$\mathsf{\Delta_{\mathrm{inhom}}/\Gamma_{10}}$')
+        else:
+            ax.set_ylabel(r'ellipticity', fontsize=18)
+        # parametric ----------------------------------------------------------
+        ax = plt.subplot(gs[3, delay_index])
+        # points
+        for item in delta_gamma.values():
+            for measurement in item[0]:
+                c = measurement[1] * measurement[0]
+                if c == 0.:
+                    marker = 'x'
+                    s = 20
+                else:
+                    marker = 'o'
+                    s = 100*float(c) 
+                ax.scatter(measurement[3], measurement[4], s=s, marker=marker, alpha=0.5, color='k', edgecolor='none')
+        # delta gamma
+        for key, item in delta_gamma.items():
+            measurements, c = item
+            arr = np.array(measurements)
+            if arr.size > 0:
+                ax.plot(arr[:, 3], arr[:, 4], c=c, lw=2)
+        # delta_inhom_over_gamma
+        for key, item in delta_inhom_over_gamma.items():
+            measurements, ls = item
+            arr = np.array(measurements)
+            if arr.size > 0:
+                ax.plot(arr[:, 3], arr[:, 4], c='k', ls='-', alpha=0.25, lw=2)
+        ax.grid()
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.set_xlabel(r'ellipticity', fontsize=18)
+        if delay_index == 0:
+            ax.set_ylabel(r'$\mathsf{\Delta_{\mathrm{3PEPS}}/\Delta_t}$', fontsize=18)
+        else:
+            plt.setp(ax.get_yticklabels(), visible=False)
+    # finish
+    wt.artists.savefig(output_path, fig=fig, close=True)
 
 
 ### convolve ##################################################################
@@ -1244,7 +1500,7 @@ if not os.path.isfile(output_path) or force_plotting:
 
 output_path = os.path.join(directory, 'convolve.png')
 
-force_plotting = True
+force_plotting = False
 
 if not os.path.isfile(output_path) or force_plotting:
     # create figure -----------------------------------------------------------
@@ -1324,7 +1580,6 @@ if not os.path.isfile(output_path) or force_plotting:
     wt.artists.diagonal_line(xi, yi)
     wt.artists.corner_text('c', ax=ax, fontsize=18, background_alpha=1)
     # show inhomo linewidth applied
-    # TODO: ensure that this matches the actual linewidth (FWHM) used...
     center = 7000.
     width = 2*delta_omega
     l = np.linspace(center-(width/2), center+(width/2), 100)
@@ -1352,8 +1607,8 @@ force_plotting = False
 
 if not os.path.isfile(output_path) or force_plotting:
     # set up figure
-    fig, gs = wt.artists.create_figure(width=12, nrows=4,
-                                       cols=[1, 1, 1, 0, 'cbar'])
+    fig, gs = wt.artists.create_figure(width='double', nrows=3,
+                                       cols=[1, 1, 1, 1, 0, 'cbar'])
     # fit method
     def measure_shifts(xi, yi, zi):
         '''
@@ -1435,45 +1690,45 @@ if not os.path.isfile(output_path) or force_plotting:
         T = shifts[:, 0] + tau
         tau[tau>0] = -1e-6  # hack for display
         c = 'y'
-        ax.plot(tau, T, lw=5, c=c)
-        ax.text(tau[0], T[0], '{:.2f}'.format(abs(tau[0])) , color=c, ha='right', va='bottom', fontsize=18)
-        ax.text(tau[-1]-0.1, -3.5, '{:.2f}'.format(abs(tau[-1])) , color=c, ha='right', va='center', fontsize=18)
+        ax.plot(tau, T, lw=5, c=c, zorder=1000)
+        ax.text(tau[0], T[0], '{:.2f}'.format(abs(tau[0])) , color=c, ha='right', va='bottom', fontsize=18, path_effects=[PathEffects.withStroke(linewidth=2, foreground="k")], zorder=1001)
+        ax.text(tau[-1]-0.2, -3.5, '{:.2f}'.format(abs(tau[-1])) , color=c, ha='right', va='center', fontsize=18, path_effects=[PathEffects.withStroke(linewidth=2, foreground="k")], zorder=1001)
     # fill out
-    # row 1
+    # col 1
     ax = plt.subplot(gs[0, 0])
     plot(ax, '0.5', '0.0')
-    ax.set_title(r'$\mathsf{\Gamma_{10}\Delta_t = 2.0}$', fontsize=18)
-    ax = plt.subplot(gs[0, 1])
-    plot(ax, '1.0', '0.0')
-    ax.set_title(r'$\mathsf{\Gamma_{10}\Delta_t = 1.0}$', fontsize=18)
-    ax = plt.subplot(gs[0, 2])
-    plot(ax, '2.0', '0.0')
-    ax.set_title(r'$\mathsf{\Gamma_{10}\Delta_t = 0.5}$', fontsize=18)
-    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 0.0}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
-    # row 2
+    ax.set_title(r'$\mathsf{\Delta_{inhom} = 0.0}$', fontsize=18)
     ax = plt.subplot(gs[1, 0])
+    plot(ax, '1.0', '0.0')
+    ax = plt.subplot(gs[2, 0])
+    plot(ax, '2.0', '0.0')
+    # col 2
+    ax = plt.subplot(gs[0, 1])
     plot(ax, '0.5', '0.5')
+    ax.set_title(r'$\mathsf{\Delta_{inhom} = 0.5 \Delta_\omega}$', fontsize=18)
     ax = plt.subplot(gs[1, 1])
     plot(ax, '1.0', '0.5')
-    ax = plt.subplot(gs[1, 2])
-    plot(ax, '2.0', '0.5')
-    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 0.5 \Delta_\omega}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
-    # row 3
-    ax = plt.subplot(gs[2, 0])
-    plot(ax, '0.5', '1.0')
     ax = plt.subplot(gs[2, 1])
+    plot(ax, '2.0', '0.5')
+    # col 3
+    ax = plt.subplot(gs[0, 2])
+    plot(ax, '0.5', '1.0')
+    ax.set_title(r'$\mathsf{\Delta_{inhom} = 1.0 \Delta_\omega}$', fontsize=18)
+    ax = plt.subplot(gs[1, 2])
     plot(ax, '1.0', '1.0')
     ax = plt.subplot(gs[2, 2])
     plot(ax, '2.0', '1.0')
-    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 1.0 \Delta_\omega}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
-    # row 4
-    ax = plt.subplot(gs[3, 0])
+    # col 4
+    ax = plt.subplot(gs[0, 3])
     plot(ax, '0.5', '2.0')
-    ax = plt.subplot(gs[3, 1])
+    ax.set_title(r'$\mathsf{\Delta_{inhom} = 2.0 \Delta_\omega}$', fontsize=18)
+    ax.text(1.01, 0.5, r'$\mathsf{\Gamma_{10}\Delta_t = 2.0}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    ax = plt.subplot(gs[1, 3])
     plot(ax, '1.0', '2.0')
-    ax = plt.subplot(gs[3, 2])
+    ax.text(1.01, 0.5, r'$\mathsf{\Gamma_{10}\Delta_t = 1.0}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    ax = plt.subplot(gs[2, 3])
     plot(ax, '2.0', '2.0')
-    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 2.0 \Delta_\omega}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    ax.text(1.01, 0.5, r'$\mathsf{\Gamma_{10}\Delta_t = 0.5}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
     # colorbar
     cax = plt.subplot(gs[:, -1])
     wt.artists.plot_colorbar(cax=cax, cmap=cmap, label='amplitude', label_fontsize=18)
@@ -1529,6 +1784,8 @@ if not os.path.isfile(output_path) or force_plotting:
             plt.setp(ax.get_xticklabels(), visible=False)
         if ax.is_first_row():
             d2 = normalize_delay(-d['d2'])[d2_index]
+            if d2 == 0.:
+                d2 = abs(d2)
             d2_text = '%.1f'%d2
             label = r'$\mathsf{\tau_{21}=' + d2_text + r'\Delta_t}$'
             ax.set_title(label, fontsize=18)
@@ -1586,7 +1843,7 @@ if not os.path.isfile(output_path) or force_plotting:
 
 output_path = os.path.join(directory, 'wigners full.png')
 
-force_plotting = True
+force_plotting = False
 
 if not os.path.isfile(output_path) or force_plotting:
     # set up figure
@@ -1723,6 +1980,8 @@ if not os.path.isfile(output_path) or force_plotting:
             plt.setp(ax.get_xticklabels(), visible=False)
         if ax.is_first_row():
             d2 = normalize_delay(-d['d2'])[d2_index]
+            if d2 == 0.:
+                d2 = abs(d2)
             d2_text = '%.1f'%d2
             label = r'$\mathsf{\tau_{21}=' + d2_text + r'\Delta_t}$'
             ax.set_title(label, fontsize=18)
@@ -1784,8 +2043,8 @@ force_plotting = False
 
 if not os.path.isfile(output_path) or force_plotting:
     # set up figure
-    fig, gs = wt.artists.create_figure(width=12, nrows=4,
-                                       cols=[1, 1, 1, 0, 'cbar'])
+    fig, gs = wt.artists.create_figure(width='double', nrows=3,
+                                       cols=[1, 1, 1, 1, 0, 'cbar'])
     # fit method
     def get_widths(xi, yi, zi):
         '''
@@ -1860,41 +2119,41 @@ if not os.path.isfile(output_path) or force_plotting:
         label = r'${\mathcal{E}=' + '{:.2f}'.format(ellipticity) + r'}$'
         wt.artists.corner_text(label, corner='LR', fontsize=18)
     # fill out
-    # row 1
+    # col 1
     ax = plt.subplot(gs[0, 0])
     plot(ax, '0.5', '0.0')
-    ax.set_title(r'$\mathsf{\Gamma_{10}\Delta_t = 2.0}$', fontsize=18)
-    ax = plt.subplot(gs[0, 1])
-    plot(ax, '1.0', '0.0')
-    ax.set_title(r'$\mathsf{\Gamma_{10}\Delta_t = 1.0}$', fontsize=18)
-    ax = plt.subplot(gs[0, 2])
-    plot(ax, '2.0', '0.0')
-    ax.set_title(r'$\mathsf{\Gamma_{10}\Delta_t = 0.5}$', fontsize=18)
-    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 0.0}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
-    # row 2
+    ax.set_title(r'$\mathsf{\Delta_{inhom} = 0.0}$', fontsize=18)
     ax = plt.subplot(gs[1, 0])
+    plot(ax, '1.0', '0.0')
+    ax = plt.subplot(gs[2, 0])
+    plot(ax, '2.0', '0.0')
+    # col 2
+    ax = plt.subplot(gs[0, 1])
     plot(ax, '0.5', '0.5')
+    ax.set_title(r'$\mathsf{\Delta_{inhom} = 0.5 \Delta_\omega}$', fontsize=18)
     ax = plt.subplot(gs[1, 1])
     plot(ax, '1.0', '0.5')
-    ax = plt.subplot(gs[1, 2])
-    plot(ax, '2.0', '0.5')
-    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 0.5 \Delta_\omega}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
-    # row 3
-    ax = plt.subplot(gs[2, 0])
-    plot(ax, '0.5', '1.0')
     ax = plt.subplot(gs[2, 1])
+    plot(ax, '2.0', '0.5')
+    # col 3
+    ax = plt.subplot(gs[0, 2])
+    plot(ax, '0.5', '1.0')
+    ax.set_title(r'$\mathsf{\Delta_{inhom} = 1.0 \Delta_\omega}$', fontsize=18)
+    ax = plt.subplot(gs[1, 2])
     plot(ax, '1.0', '1.0')
     ax = plt.subplot(gs[2, 2])
     plot(ax, '2.0', '1.0')
-    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 1.0 \Delta_\omega}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
-    # row 4
-    ax = plt.subplot(gs[3, 0])
+    # col 4
+    ax = plt.subplot(gs[0, 3])
     plot(ax, '0.5', '2.0')
-    ax = plt.subplot(gs[3, 1])
+    ax.set_title(r'$\mathsf{\Delta_{inhom} = 2.0 \Delta_\omega}$', fontsize=18)
+    ax.text(1.01, 0.5, r'$\mathsf{\Gamma_{10}\Delta_t = 2.0}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    ax = plt.subplot(gs[1, 3])
     plot(ax, '1.0', '2.0')
-    ax = plt.subplot(gs[3, 2])
+    ax.text(1.01, 0.5, r'$\mathsf{\Gamma_{10}\Delta_t = 1.0}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    ax = plt.subplot(gs[2, 3])
     plot(ax, '2.0', '2.0')
-    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 2.0 \Delta_\omega}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    ax.text(1.01, 0.5, r'$\mathsf{\Gamma_{10}\Delta_t = 0.5}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
     # colorbar
     cax = plt.subplot(gs[:, -1])
     wt.artists.plot_colorbar(cax=cax, cmap=cmap, label='amplitude', label_fontsize=18)
@@ -1911,8 +2170,8 @@ force_plotting = False
 
 if not os.path.isfile(output_path) or force_plotting:
     # set up figure
-    fig, gs = wt.artists.create_figure(width=12, nrows=4,
-                                       cols=[1, 1, 1, 0, 'cbar'])
+    fig, gs = wt.artists.create_figure(width='double', nrows=3,
+                                       cols=[1, 1, 1, 1, 0, 'cbar'])
     # fit method
     def get_widths(xi, yi, zi):
         '''
@@ -1936,7 +2195,7 @@ if not os.path.isfile(output_path) or force_plotting:
         out = leastsq(erf1, p0, args=(xi, y), full_output=False)[0]
         outs.append(2.35482*out[2])
         # antidiagonal
-        y = np.flipud(zi).diagonal()
+        y = zi[...,::-1].diagonal()
         p0 = []
         p0.append(np.nanmax(y))  # amplitude
         p0.append(0.)  # center
@@ -1987,50 +2246,43 @@ if not os.path.isfile(output_path) or force_plotting:
         label = r'${\mathcal{E}=' + '{:.2f}'.format(ellipticity) + r'}$'
         wt.artists.corner_text(label, corner='LR', fontsize=18)
     # fill out
-    # row 1
+    # col 1
     ax = plt.subplot(gs[0, 0])
     plot(ax, '0.5', '0.0')
-    ax.set_title(r'$\mathsf{\Gamma_{10}\Delta_t = 2.0}$', fontsize=18)
-    ax = plt.subplot(gs[0, 1])
-    plot(ax, '1.0', '0.0')
-    ax.set_title(r'$\mathsf{\Gamma_{10}\Delta_t = 1.0}$', fontsize=18)
-    ax = plt.subplot(gs[0, 2])
-    plot(ax, '2.0', '0.0')
-    ax.set_title(r'$\mathsf{\Gamma_{10}\Delta_t = 0.5}$', fontsize=18)
-    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 0.0}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
-    # row 2
+    ax.set_title(r'$\mathsf{\Delta_{inhom} = 0.0}$', fontsize=18)
     ax = plt.subplot(gs[1, 0])
+    plot(ax, '1.0', '0.0')
+    ax = plt.subplot(gs[2, 0])
+    plot(ax, '2.0', '0.0')
+    # col 2
+    ax = plt.subplot(gs[0, 1])
     plot(ax, '0.5', '0.5')
+    ax.set_title(r'$\mathsf{\Delta_{inhom} = 0.5 \Delta_\omega}$', fontsize=18)
     ax = plt.subplot(gs[1, 1])
     plot(ax, '1.0', '0.5')
-    ax = plt.subplot(gs[1, 2])
-    plot(ax, '2.0', '0.5')
-    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 0.5 \Delta_\omega}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
-    # row 3
-    ax = plt.subplot(gs[2, 0])
-    plot(ax, '0.5', '1.0')
     ax = plt.subplot(gs[2, 1])
+    plot(ax, '2.0', '0.5')
+    # col 3
+    ax = plt.subplot(gs[0, 2])
+    plot(ax, '0.5', '1.0')
+    ax.set_title(r'$\mathsf{\Delta_{inhom} = 1.0 \Delta_\omega}$', fontsize=18)
+    ax = plt.subplot(gs[1, 2])
     plot(ax, '1.0', '1.0')
     ax = plt.subplot(gs[2, 2])
     plot(ax, '2.0', '1.0')
-    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 1.0 \Delta_\omega}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
-    # row 4
-    ax = plt.subplot(gs[3, 0])
+    # col 4
+    ax = plt.subplot(gs[0, 3])
     plot(ax, '0.5', '2.0')
-    ax = plt.subplot(gs[3, 1])
+    ax.set_title(r'$\mathsf{\Delta_{inhom} = 2.0 \Delta_\omega}$', fontsize=18)
+    ax.text(1.01, 0.5, r'$\mathsf{\Gamma_{10}\Delta_t = 2.0}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    ax = plt.subplot(gs[1, 3])
     plot(ax, '1.0', '2.0')
-    ax = plt.subplot(gs[3, 2])
+    ax.text(1.01, 0.5, r'$\mathsf{\Gamma_{10}\Delta_t = 1.0}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    ax = plt.subplot(gs[2, 3])
     plot(ax, '2.0', '2.0')
-    ax.text(1.01, 0.5, r'$\mathsf{\Delta_{inhom} = 2.0 \Delta_\omega}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
+    ax.text(1.01, 0.5, r'$\mathsf{\Gamma_{10}\Delta_t = 0.5}$', rotation=-90, fontsize=18, va='center', transform=ax.transAxes)
     # colorbar
     cax = plt.subplot(gs[:, -1])
     wt.artists.plot_colorbar(cax=cax, cmap=cmap, label='amplitude', label_fontsize=18)
     # finish
     wt.artists.savefig(output_path, fig=fig, close=True)
-
-
-
-
-
-
-
